@@ -42,12 +42,12 @@ jobs:
         run: >
           if [ "${ENABLE_PUBLISHING}" = "true" ]; then
             echo "Publishing to TestPyPI..."
+            uv publish --index testpypi \
+              -u __token__ -p "${TEST_PYPI_API_TOKEN}" dist/*
           else
             echo "Publishing is disabled. Set ENABLE_PUBLISHING to true to enable."
             exit 0
           fi
-          uv publish --index testpypi
-          -u __token__ -p ${TEST_PYPI_API_TOKEN} dist/*
 
       # Publish to PyPI for 'main' branch
       - name: Publish package to PyPI
@@ -55,9 +55,9 @@ jobs:
         run: >
           if [ "${ENABLE_PUBLISHING}" = "true" ]; then
             echo "Publishing to PyPI..."
+            uv publish --index pypi \
+              -u __token__ -p "${PYPI_API_TOKEN}" dist/*
           else
             echo "Publishing is disabled. Set ENABLE_PUBLISHING to true to enable."
             exit 0
           fi
-          uv publish --index pypi
-          -u __token__ -p ${PYPI_API_TOKEN} dist/*
