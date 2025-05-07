@@ -7,9 +7,12 @@
 	],
 	"words": [
 		"pylint",
+		"PYPI",
 		"pyproject",
 		"pyright",
 		"pytest",
+		"sdist",
+		"testpypi",
 		"venv"
 	]
 }
