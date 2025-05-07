@@ -13,6 +13,8 @@ Imagine seamlessly starting your new Python project with a well-organized struct
   - [What is this?](#what-is-this)
   - [Key Goals \& Features](#key-goals--features)
   - [How it Works](#how-it-works)
+    - [Quick Start with the Project Factory](#quick-start-with-the-project-factory)
+    - [Manual Setup](#manual-setup)
   - [Project Status](#project-status)
   - [Getting Started](#getting-started)
     - [Prerequisites](#prerequisites)
@@ -29,12 +31,43 @@ Imagine seamlessly starting your new Python project with a well-organized struct
 
 ## Key Goals & Features
 
-- **Quick Start:** Get your Python project up and running quickly with a pre-defined structure.
+- **Quick Start:** Get your Python project up and running quickly with a pre-defined structure and an easy-to-use project factory script.
 - **Best Practices:** Includes common configurations and tools following Python best practices.
 - **Customizable:** Easily adapt the template to your specific project needs.
 - **Standardization:** Adhere to common Python project standards.
+- **Modern Tooling:** Uses [uv](https://github.com/astral-sh/uv) for dependency management and virtual environments.
 
 ## How it Works
+
+### Quick Start with the Project Factory
+
+The easiest way to start a new project is to use our Project Factory script:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/ksylvan/python-project-template/main/bin/install.sh | bash
+```
+
+This interactive script will:
+
+1. Ask for your project details:
+   - Project name (must be a valid Python package name)
+   - Author name
+   - Author email
+   - Project description
+2. Clone this template and customize it with your details
+3. Set up a new Git repository
+4. Optionally create an initial commit
+5. Set up the development environment with all dependencies
+
+**Prerequisites for using the Project Factory:**
+
+- Git
+- curl
+- sed and grep (standard on most Unix-like systems)
+
+### Manual Setup
+
+If you prefer to set up manually, you can:
 
 1. **Clone or Use Template:** Start your new project by cloning this repository or using it as a template on GitHub.
 2. **Customize:** Modify the project name, description, and other details in `pyproject.toml` and other configuration files.
