@@ -7,6 +7,10 @@ on:
       - main
       - develop
 
+env:
+  ENABLE_PUBLISHING: false # Set to true to enable publishing
+  TEST_PYPI_API_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }} #
+  PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }} # Set your PyPI API token in GitHub secrets
 jobs:
   build_and_publish:
     runs-on: ubuntu-latest
@@ -36,12 +40,24 @@ jobs:
       - name: Publish package to TestPyPI
         if: github.ref == 'refs/heads/develop'
         run: >
+          if [ "${ENABLE_PUBLISHING}" = "true" ]; then
+            echo "Publishing to TestPyPI..."
+          else
+            echo "Publishing is disabled. Set ENABLE_PUBLISHING to true to enable."
+            exit 0
+          fi
           uv publish --index testpypi
-          -u __token__ -p ${{ secrets.TEST_PYPI_API_TOKEN }} dist/*
+          -u __token__ -p ${TEST_PYPI_API_TOKEN} dist/*
 
       # Publish to PyPI for 'main' branch
       - name: Publish package to PyPI
         if: github.ref == 'refs/heads/main'
         run: >
+          if [ "${ENABLE_PUBLISHING}" = "true" ]; then
+            echo "Publishing to PyPI..."
+          else
+            echo "Publishing is disabled. Set ENABLE_PUBLISHING to true to enable."
+            exit 0
+          fi
           uv publish --index pypi
-          -u __token__ -p ${{ secrets.PYPI_API_TOKEN }} dist/*
+          -u __token__ -p ${PYPI_API_TOKEN} dist/*
