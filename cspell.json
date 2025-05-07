@@ -1,0 +1,15 @@
+{
+	"ignorePaths": [
+		"./bin/setup.sh",
+		"cspell.json",
+		".gitignore",
+		"pyproject.toml"
+	],
+	"words": [
+		"pylint",
+		"pyproject",
+		"pyright",
+		"pytest",
+		"venv"
+	]
+}
