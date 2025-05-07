@@ -66,6 +66,55 @@ We welcome contributions to this project! Please follow these guidelines:
     `develop` is for fixes and new features. Any pull request based on `main` will be auto-rejected
     by our CI/CD pipeline.
 
+### Details about the CI/CD Pipeline
+
+There are two Rulesets that are enabled:
+
+#### Main branch deletion protection
+
+```plaintext
+Main Branch
+ID: 5272788
+Source: ksylvan/python-project-template (Repository)
+Enforcement: Active
+You can bypass: never
+
+Bypass List
+This ruleset cannot be bypassed
+
+Conditions
+- ref_name: [exclude: []] [include: [refs/heads/main]]
+
+Rules
+- deletion
+- non_fast_forward
+- required_status_checks: [do_not_enforce_on_create: false] [required_status_checks: [map[context:tests (3.11) integration_id:15368] map[context:tests (3.12) integration_id:15368] map[context:Check PR Source Branch integration_id:15368]]] [strict_required_status_checks_policy: true]
+
+```
+
+#### Merge into Develop
+
+```plaintext
+
+Merge Into Develop
+ID: 5259640
+Source: ksylvan/fabric-mcp (Repository)
+Enforcement: Active
+You can bypass: never
+
+Bypass List
+This ruleset cannot be bypassed
+
+Conditions
+- ref_name: [exclude: []] [include: [refs/heads/develop]]
+
+Rules
+- deletion
+- non_fast_forward
+- pull_request: [allowed_merge_methods: [merge squash rebase]] [automatic_copilot_code_review_enabled: false] [dismiss_stale_reviews_on_push: false] [require_code_owner_review: false] [require_last_push_approval: false] [required_approving_review_count: 0] [required_review_thread_resolution: true]
+- required_status_checks: [do_not_enforce_on_create: false] [required_status_checks: [map[context:tests (3.11) integration_id:15368] map[context:tests (3.12) integration_id:15368]]] [strict_required_status_checks_policy: false]
+```
+
 ## Code Style
 
 Please follow the existing code style. We use `ruff` for formatting and quick linting, and `pylint` for more thorough static analysis. We also use `pyright` with `strict` level type checking.
@@ -73,20 +122,6 @@ Please follow the existing code style. We use `ruff` for formatting and quick li
 Configuration can be found in `pyproject.toml`.
 
 Ensure you run the linters before committing (see step 7 above).
-
-## Fast MCP inspector
-
-You can run the `fastmcp` inspector to test the server:
-
-```bash
-fastmcp dev ./fabric_mcp/server_stdio.py
-2025-05-03 21:46:21,457 - server_stdio - INFO - Starting server with log level DEBUG
-Starting MCP inspector...
-⚙️ Proxy server listening on port 6277
-🔍 MCP Inspector is up and running at http://127.0.0.1:6274 🚀
-```
-
-Then you can browse to the localhost port and interact with the MCP server.
 
 ## Reporting Bugs
 
