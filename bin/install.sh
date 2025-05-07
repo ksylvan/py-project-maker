@@ -164,6 +164,33 @@ validate_email() {
     echo "1"
 }
 
+# Function to validate GitHub username
+validate_github_username() {
+    local username="$1"
+    
+    # Check if username is empty
+    if [ -z "$username" ]; then
+        echo "1"  # Empty is allowed (will use default)
+        return
+    fi
+    
+    # Check length (1-39 characters)
+    if [ ${#username} -gt 39 ]; then
+        echo "0"
+        return
+    fi
+    
+    # Check if it contains only alphanumeric characters and single hyphens
+    # Cannot start or end with hyphen
+    # Cannot have consecutive hyphens
+    if [[ ! "$username" =~ ^[a-zA-Z0-9]+(-[a-zA-Z0-9]+)*$ ]] && [[ ! "$username" =~ ^[a-zA-Z0-9]+$ ]]; then
+        echo "0"
+        return
+    fi
+    
+    echo "1"
+}
+
 # Get project information
 info "Let's set up your new Python project!"
 echo ""
@@ -222,6 +249,30 @@ while true; do
     break
 done
 
+# Get and validate GitHub username
+while true; do
+    echo -n "GitHub username (for repository URLs): "
+    read -r GITHUB_USERNAME
+    
+    # If GitHub username is empty, use a default
+    if [ -z "$GITHUB_USERNAME" ]; then
+        GITHUB_USERNAME="yourname"
+        break
+    fi
+    
+    # Validate GitHub username
+    if [ "$(validate_github_username "$GITHUB_USERNAME")" = "0" ]; then
+        warning "Invalid GitHub username. It must:"
+        warning "  - Be 1-39 characters long"
+        warning "  - Contain only alphanumeric characters and hyphens"
+        warning "  - Not begin or end with a hyphen"
+        warning "  - Not contain consecutive hyphens"
+        continue
+    fi
+    
+    break
+done
+
 # Get project description
 echo -n "Project description: "
 read -r PROJECT_DESC
@@ -240,6 +291,7 @@ echo -e "${BOLD}Project details:${NO_COLOR}"
 echo "  Project name: $PROJECT_NAME"
 echo "  Author name: $AUTHOR_NAME"
 echo "  Author email: $AUTHOR_EMAIL"
+echo "  GitHub username: $GITHUB_USERNAME"
 echo "  Description: $PROJECT_DESC"
 echo "  Year: $CURRENT_YEAR"
 echo ""
@@ -292,8 +344,14 @@ replace_in_files "Your@Email.com" "$AUTHOR_EMAIL"
 # Replace project description
 replace_in_files "Add your description here" "$PROJECT_DESC"
 
+# Replace general description in __init__.py
+replace_in_files "Your general description here" "$PROJECT_DESC"
+
 # Replace year
 replace_in_files "2025" "$CURRENT_YEAR"
+
+# Replace GitHub username in URLs
+replace_in_files "yourname" "$GITHUB_USERNAME"
 
 # Replace in specific files that might be missed by the generic replacement
 # pyproject.toml
@@ -326,6 +384,13 @@ if [ -d "python_project_template" ]; then
         sed -i.bak "s|python_project_template|${PROJECT_NAME}|g" "$file"
         rm "${file}.bak"
     done
+    
+    # Enhance the module docstring in __init__.py
+    if [ -f "$PROJECT_NAME/__init__.py" ]; then
+        MODULE_DOCSTRING="\"${PROJECT_DESC}\n\nA Python package for ${PROJECT_NAME}.\"\n"
+        sed -i.bak "1s|\".*\"|${MODULE_DOCSTRING}|" "$PROJECT_NAME/__init__.py" 
+        rm "$PROJECT_NAME/__init__.py.bak"
+    fi
 fi
 
 # Initialize new git repository
