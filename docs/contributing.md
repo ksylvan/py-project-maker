@@ -17,12 +17,15 @@ We welcome contributions to this project! Please follow these guidelines:
     git checkout -b my-fix-branch
     ```
 
-3. **Set up the development environment:** Run the setup script from the root of the repository. This will create a virtual environment (`.venv`) using `uv` and install all necessary dependencies, including development tools.
+3. **Set up the development environment:** Run the bootstrap script from the root of the repository. This will create a virtual environment (`.venv`) using `uv` and install all necessary dependencies, including development tools.
 
     ```bash
     # Run from the project root directory
-    ./bin/setup.sh
+    ./bootstrap/setup.sh
     ```
+
+    If you are using VSCode, the bootstrap process is set up to run automatically when
+you open your fork of the project (see the `.vscode/tasks.json` file)
 
 4. **Activate the virtual environment:** Before running any project commands, activate the environment:
 
@@ -35,13 +38,13 @@ We welcome contributions to this project! Please follow these guidelines:
 6. **Test your changes:** Run the test suite using `pytest`. You can also use the VS Code task "Run Test Suite". Tests are automatically run via GitHub Actions (`tests.yml`) when you open a pull request.
 
     ```bash
-    pytest -v
+    uv run pytest -v
     ```
 
 7. **Check code style:** Ensure your code adheres to the project's style guidelines by running the linters (`ruff` and `pylint`). You can also use the VS Code task "Run Linter". Linting is automatically checked via GitHub Actions (`tests.yml`) when you open a pull request.
 
     ```bash
-    ruff check . && pylint .
+    uv run ruff check . && uv run pylint .
     ```
 
 8. **Commit your changes:** Commit your changes with a clear commit message following conventional commit standards if possible:
@@ -73,9 +76,7 @@ There are two Rulesets that are enabled:
 #### Main branch deletion protection
 
 ```plaintext
-Main Branch
-ID: 5272788
-Source: ksylvan/python-project-template (Repository)
+Name: Main Branch
 Enforcement: Active
 You can bypass: never
 
@@ -88,17 +89,23 @@ Conditions
 Rules
 - deletion
 - non_fast_forward
-- required_status_checks: [do_not_enforce_on_create: false] [required_status_checks: [map[context:tests (3.11) integration_id:15368] map[context:tests (3.12) integration_id:15368] map[context:Check PR Source Branch integration_id:15368]]] [strict_required_status_checks_policy: true]
-
+- required_status_checks:
+    - [do_not_enforce_on_create: false]
+    - [
+        required_status_checks: [
+            map[context:tests (3.11) integration_id:15368]
+            map[context:tests (3.12) integration_id:15368]
+            map[context:Check PR Source Branch integration_id:15368]
+        ]
+    ]
+    - [strict_required_status_checks_policy: true]
 ```
 
 #### Merge into Develop
 
 ```plaintext
 
-Merge Into Develop
-ID: 5259640
-Source: ksylvan/fabric-mcp (Repository)
+Name: Merge Into Develop
 Enforcement: Active
 You can bypass: never
 
@@ -111,15 +118,29 @@ Conditions
 Rules
 - deletion
 - non_fast_forward
-- pull_request: [allowed_merge_methods: [merge squash rebase]] [automatic_copilot_code_review_enabled: false] [dismiss_stale_reviews_on_push: false] [require_code_owner_review: false] [require_last_push_approval: false] [required_approving_review_count: 0] [required_review_thread_resolution: true]
-- required_status_checks: [do_not_enforce_on_create: false] [required_status_checks: [map[context:tests (3.11) integration_id:15368] map[context:tests (3.12) integration_id:15368]]] [strict_required_status_checks_policy: false]
+- pull_request:
+    [allowed_merge_methods: [merge squash rebase]]
+    [automatic_copilot_code_review_enabled: false]
+    [dismiss_stale_reviews_on_push: false]
+    [require_code_owner_review: false]
+    [require_last_push_approval: false]
+    [required_approving_review_count: 0]
+    [required_review_thread_resolution: true]
+- required_status_checks:
+    - [do_not_enforce_on_create: false]
+    - [required_status_checks: [
+            map[context:tests (3.11) integration_id:15368]
+            map[context:tests (3.12) integration_id:15368]
+        ]
+    ]
+    - [strict_required_status_checks_policy: false]
 ```
 
 ## Code Style
 
 Please follow the existing code style. We use `ruff` for formatting and quick linting, and `pylint` for more thorough static analysis. We also use `pyright` with `strict` level type checking.
 
-Configuration can be found in `pyproject.toml`.
+Configuration can be found in `pyproject.toml`, `.ruff.toml`, and `.pylintrc`.
 
 Ensure you run the linters before committing (see step 7 above).
 

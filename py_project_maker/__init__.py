@@ -1,4 +1,4 @@
-"Your general description here."
+"py_project_maker - A Python project template generator"
 
 from .__about__ import __version__
 
