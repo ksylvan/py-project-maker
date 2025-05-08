@@ -3,10 +3,10 @@ requires = ["hatchling>=1.27.0"]
 build-backend = "hatchling.build"
 
 [project]
-name = "python-project-template"
+name = "py-project-maker"
 dynamic = ["version"]
 description = "Add your description here"
-authors = [{ name = "Your Name", email = "Your@Email.com" }]
+authors = [{ name = "Kayvan Sylvan", email = "kayvan@sylvan.com" }]
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
@@ -18,31 +18,31 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-"Homepage" = "https://github.com/yourname/python-project-template"
-"Releases" = "https://yourname.github.io/python-project-template/releases"
-"Bug Tracker" = "https://yourname.github.io/python-project-template/issues"
-"Documentation" = "https://yourname.github.io/python-project-template/#readme"
+"Homepage" = "https://github.com/ksylvan/py-project-maker"
+"Releases" = "https://github.com/ksylvan/py-project-maker/releases"
+"Bug Tracker" = "https://github.com/ksylvan/py-project-maker/issues"
+"Documentation" = "https://github.com/ksylvan/py-project-maker#readme"
 
-# [project.scripts]
-# myscript = "python_project_template.cli:main"
+# [tool.hatch.build.targets.wheel.shared-scripts]
+# "py_project_maker/bin/py-project-maker" = "py-project-maker"
 
 [dependency-groups]
 dev = [
     "hatch>=1.14.1",
     "hatchling>=1.27.0",
-    "pylint>=3.3.6",
+    "pylint>=3.3.7",
     "pytest>=8.3.5",
-    "ruff>=0.5.0",
-    "uv>=0.7.2",
+    "ruff>=0.11.8",
+    "uv>=0.7.3",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = "test_*.py"
 
-# ell hatchling where to find the version variable
+# Tell hatchling where to find the version variable
 [tool.hatch.version]
-path = "python_project_template/__about__.py"
+path = "py_project_maker/__about__.py"
 
 [tool.uv]
 index = [

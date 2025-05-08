@@ -2,7 +2,7 @@
 
 import re
 
-import python_project_template
+import py_project_maker
 
 # Semantic Versioning 2.0.0 regex from https://semver.org/
 # This regex is used to validate version strings.
@@ -23,11 +23,11 @@ def test_version_attributes():
     conforms to semantic versioning norms (SemVer 2.0.0).
     """
     # Check if the __version__ attribute exists
-    assert hasattr(python_project_template, "__version__"), (
+    assert hasattr(py_project_maker, "__version__"), (
         "The package should have a __version__ attribute."
     )
 
-    version = python_project_template.__version__
+    version = py_project_maker.__version__
 
     # Check if __version__ is a string
     assert isinstance(version, str), (

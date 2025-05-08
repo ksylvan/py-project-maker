@@ -1,13 +1,19 @@
 {
 	"ignorePaths": [
-		"./bin/setup.sh",
+		"bootstrap/setup.sh",
 		"cspell.json",
 		".gitignore",
-		"pyproject.toml"
+		"pyproject.toml",
+		".ruff.toml",
+		"templates/**",
+		"py_project_maker/bin/py-project-maker",
+		"uv.lock"
 	],
 	"words": [
 		"ksylvan",
+		"pycache",
 		"pylint",
+		"pylintrc",
 		"PYPI",
 		"pyproject",
 		"pyright",

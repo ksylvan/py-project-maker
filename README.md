@@ -1,33 +1,26 @@
-# Python Project Template
+# Py Project Maker
 
 **A template for creating new Python projects.**
 
 This project provides a basic structure and starting point for new Python projects. It includes common configurations and tools to help you get started quickly.
 
-Imagine seamlessly starting your new Python project with a well-organized structure and pre-configured tools!
+Imagine seamlessly starting your new Python project with a well-organized structure and pre-configured tools in minutes!
 
 ## Table of Contents
 
-- [Python Project Template](#python-project-template)
+- [Py Project Maker](#py-project-maker)
   - [Table of Contents](#table-of-contents)
   - [What is this?](#what-is-this)
   - [Key Goals \& Features](#key-goals--features)
   - [How it Works](#how-it-works)
     - [Quick Start with the Project Factory](#quick-start-with-the-project-factory)
     - [Manual Setup](#manual-setup)
-  - [Project Status](#project-status)
-  - [Getting Started](#getting-started)
-    - [Prerequisites](#prerequisites)
-    - [Installation](#installation)
-      - [From Source (for Development)](#from-source-for-development)
-      - [From PyPI (for Users)](#from-pypi-for-users)
   - [Contributing](#contributing)
   - [License](#license)
 
 ## What is this?
 
-- **Python Project Template:** A starting point for new Python projects.
-- **MCP:** An open standard protocol enabling AI applications (like IDEs) to securely interact with external tools and data sources. This template can be used to create projects that may or may not interact with MCP.
+- **Py Project Maker:** A starting point for new Python projects.
 
 ## Key Goals & Features
 
@@ -41,29 +34,14 @@ Imagine seamlessly starting your new Python project with a well-organized struct
 
 ### Quick Start with the Project Factory
 
-The easiest way to start a new project is to use our Project Factory script:
+TODO: The approach and setup script need to be finalized.
 
-```bash
-curl -sSL https://raw.githubusercontent.com/ksylvan/python-project-template/main/bin/install.sh | bash
-```
+Once the script completes, you'll have a beautiful standardized project setup. Look over the `README.md` and
+start to complete your `docs/design.md` and start to fill in the details.
 
-This interactive script will:
+To auto-publish your package to TestPyPi and PyPi (on pushes to `develop` and `main`, respectively), you'll have to set `ENABLE_PUBLISHING` to `true` in `.github/workflows/publish.yml` and add the proper GitHub Actions secrets to your new repository. Also, to enforce git PR discipline, consider creating the Git rulesets as outlined in `docs/contributing.md`.
 
-1. Ask for your project details:
-   - Project name (must be a valid Python package name)
-   - Author name
-   - Author email
-   - Project description
-2. Clone this template and customize it with your details
-3. Set up a new Git repository
-4. Optionally create an initial commit
-5. Set up the development environment with all dependencies
-
-**Prerequisites for using the Project Factory:**
-
-- Git
-- curl
-- sed and grep (standard on most Unix-like systems)
+Happy hacking!!!
 
 ### Manual Setup
 
@@ -75,74 +53,6 @@ If you prefer to set up manually, you can:
 4. **Test:** Write and run tests for your code.
 5. **Build and Distribute:** Build your project and distribute it as needed.
 
-## Project Status
-
-This project is currently in the **design** phase.
-
-The core architecture and proposed tools are outlined in the [High-Level Design Document][design_doc].
-
-The current task list is in the [tasks directory][tasks_directory] and is managed by the excellent [Task Master][taskmaster] tool.
-
-## Getting Started
-
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
-
-### Prerequisites
-
-- Python >= 3.11
-- [uv](https://github.com/astral-sh/uv) (Python package and environment manager)
-
-### Installation
-
-#### From Source (for Development)
-
-1. **Clone the repository:**
-
-   ```bash
-   git clone https://github.com/yourname/python-project-template.git
-   cd python-project-template
-   ```
-
-2. **Install dependencies using uv sync:**
-
-   ```bash
-   uv sync --dev
-   ```
-
-   This command ensures your virtual environment matches the dependencies in `pyproject.toml` and `uv.lock`, creating the environment on the first run if necessary.
-
-3. **Activate the virtual environment (uv will create it if needed):**
-
-   - On macOS/Linux:
-
-     ```bash
-     source .venv/bin/activate
-     ```
-
-   - On Windows:
-
-     ```bash
-     .venv\\Scripts\\activate
-     ```
-
-Now you have the development environment set up!
-
-#### From PyPI (for Users)
-
-If you just want to use the `python-project-template` as a base (though it's more of a template than a library to install directly for typical use), you might fork it or use it as a GitHub template.
-
-If this project were to be published as an installable package (e.g., if it provided some core library functions), the instructions would be:
-
-```bash
-# Using pip
-pip install python-project-template
-
-# Or using uv
-uv pip install python-project-template
-```
-
-This will install the package and its dependencies.
-
 ## Contributing
 
 Feedback on the template is highly welcome! Please open an issue to share your thoughts or suggestions.
@@ -151,8 +61,4 @@ Read the [contribution document here](./docs/contributing.md) and please follow 
 
 ## License
 
-Copyright (c) 2025, [Your Name](Your@Email.com) Licensed under the [MIT License](./LICENSE).
-
-[taskmaster]: https://github.com/eyaltoledano/claude-task-master
-[tasks_directory]: ./tasks
-[design_doc]: ./docs/design.md
+Copyright (c) 2025, [Kayvan Sylvan](kayvan@sylvan.com) Licensed under the [MIT License](./LICENSE).

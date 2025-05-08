@@ -6,7 +6,7 @@
 		{
 			"label": "Set up environment",
 			"type": "shell",
-			"command": "${workspaceFolder}/bin/setup.sh",
+			"command": "${workspaceFolder}/bootstrap/setup.sh",
 			"runOptions": { "runOn": "folderOpen" }
 		},
 		{
