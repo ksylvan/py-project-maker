@@ -1,5 +1,9 @@
 # PyHatchery 🐍🥚
 
+<div align="center">
+<img src="./docs/hatchery_logo.jpg" alt="cute snake hatching" width="267" height="200">
+</div>
+
 **Hatch new Python projects instantly!**
 
 PyHatchery is a command-line tool that generates a standardized, best-practice project structure with modern tooling like [uv][astral-uv] for dependency management, and `ruff` and `pylint` for linting/formatting, all pre-configured.
