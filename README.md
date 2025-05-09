@@ -37,7 +37,10 @@ pip install pyhatchery
 
 Using PyHatchery is designed to be simple and intuitive. Open your terminal and run:
 
+```bash
+# TODO: This needs to be fleshed out...
 pyhatchery new your_project_name
+```
 
 PyHatchery will then typically:
 
