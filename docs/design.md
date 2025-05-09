@@ -1,3 +1,3 @@
-# High Level Design for py-project-maker
+# High Level Design for pyhatchery
 
 TODO: This document needs to be created.

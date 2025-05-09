@@ -6,12 +6,13 @@
 		"pyproject.toml",
 		".ruff.toml",
 		"templates/**",
-		"py_project_maker/bin/py-project-maker",
+		"pyhatchery/bin/pyhatchery",
 		"uv.lock"
 	],
 	"words": [
 		"ksylvan",
 		"pycache",
+		"pyhatchery",
 		"pylint",
 		"pylintrc",
 		"PYPI",
