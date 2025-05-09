@@ -463,7 +463,7 @@ wheels = [
 ]
 
 [[package]]
-name = "py-project-maker"
+name = "pyhatchery"
 source = { editable = "." }
 
 [package.dev-dependencies]

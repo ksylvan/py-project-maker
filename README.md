@@ -1,64 +1,115 @@
-# Py Project Maker
+# PyHatchery 🐍🥚
 
-**A template for creating new Python projects.**
+**Hatch new Python projects instantly!**
 
-This project provides a basic structure and starting point for new Python projects. It includes common configurations and tools to help you get started quickly.
+PyHatchery is a command-line tool that generates a standardized, best-practice project structure with modern tooling like [uv][astral-uv] for dependency management, and `ruff` and `pylint` for linting/formatting, all pre-configured.
 
-Imagine seamlessly starting your new Python project with a well-organized structure and pre-configured tools in minutes!
+Stop wrestling with boilerplate and start coding faster. Inspired by the efficiency of [hatchling][hatchling_url], PyHatchery helps you seamlessly start new Python projects with a well-organized structure in minutes!
 
-## Table of Contents
-
-- [Py Project Maker](#py-project-maker)
-  - [Table of Contents](#table-of-contents)
-  - [What is this?](#what-is-this)
+- [PyHatchery 🐍🥚](#pyhatchery-)
   - [Key Goals \& Features](#key-goals--features)
-  - [How it Works](#how-it-works)
-    - [Quick Start with the Project Factory](#quick-start-with-the-project-factory)
-    - [Manual Setup](#manual-setup)
+  - [Installation](#installation)
+  - [How it Works: The PyHatchery Wizard](#how-it-works-the-pyhatchery-wizard)
+  - [Post-Setup Recommendations](#post-setup-recommendations)
+  - [Understanding the Project Structure (Optional)](#understanding-the-project-structure-optional)
   - [Contributing](#contributing)
   - [License](#license)
 
-## What is this?
-
-- **Py Project Maker:** A starting point for new Python projects.
-
 ## Key Goals & Features
 
-- **Quick Start:** Get your Python project up and running quickly with a pre-defined structure and an easy-to-use project factory script.
-- **Best Practices:** Includes common configurations and tools following Python best practices.
-- **Customizable:** Easily adapt the template to your specific project needs.
-- **Standardization:** Adhere to common Python project standards.
-- **Modern Tooling:** Uses [uv](https://github.com/astral-sh/uv) for dependency management and virtual environments.
+- 🚀 **Rapid Project Scaffolding:** Generate a complete project skeleton with a single command.
+- 🛠️ **Modern Tooling Pre-configured:** Comes with:
+  - `uv` for lightning-fast dependency management and virtual environments.
+  - `ruff` and `pylint` configurations for immediate code quality checks.
+  - ([hatchling][hatchling_url] for building the package).
+- ⚙️ **Best Practices Baked In:** Standardized directory layout, basic testing setup, `.gitignore`, and essential configuration files.
+- 📝 **Automated Personalization:** Automatically customizes project name, author details, and license information.
+- ✅ **Standardized:** Ensures consistency across your Python projects, making them easier to navigate and maintain.
+- 🌱 **Foundation for Growth:** Provides a solid, clean base for projects of any scale.
 
-## How it Works
+## Installation
 
-### Quick Start with the Project Factory
+You can install PyHatchery directly from PyPI:
 
-TODO: The approach and setup script need to be finalized.
+pip install pyhatchery
 
-Once the script completes, you'll have a beautiful standardized project setup. Look over the `README.md` and
-start to complete your `docs/design.md` and start to fill in the details.
+## How it Works: The PyHatchery Wizard
 
-To auto-publish your package to TestPyPi and PyPi (on pushes to `develop` and `main`, respectively), you'll have to set `ENABLE_PUBLISHING` to `true` in `.github/workflows/publish.yml` and add the proper GitHub Actions secrets to your new repository. Also, to enforce git PR discipline, consider creating the Git rulesets as outlined in `docs/contributing.md`.
+Using PyHatchery is designed to be simple and intuitive. Open your terminal and run:
+
+```bash
+# TODO: This needs to be fleshed out...
+pyhatchery new your_project_name
+```
+
+PyHatchery will then typically:
+
+1. **Ask for Project Details:** Prompt you for information such as:
+    - Author Name (e.g., "Your Name")
+    - Author Email (e.g., "<your.email@example.com>")
+    - Project Description (a short summary of your project)
+2. **Clone Template:** Internally, it clones its built-in, best-practice project template.
+3. **Personalize Files:** It intelligently updates key files (like `pyproject.toml`, `LICENSE`, `README.md_template`) with your provided project name, author details, and the current copyright year.
+4. **Finalize Structure:** Sets up a fresh project structure in a new directory named `your_project_name`.
+5. **Clean Up:** Removes the template's `.git` history, allowing you to initialize your own version control.
+
+Once completed, navigate to your new project:
+
+```bash
+cd your_project_name
+```
+
+Your new Python project is ready. You can now initialize your own Git repository if you wish
+
+```bash
+git init
+git add .
+git commit -m "Initial project structure from PyHatchery"
+```
+
+Start developing!
+
+## Post-Setup Recommendations
+
+After your project is hatched, you might want to:
+
+- Review the generated `README.md` in your new project and fill in your project's specific details.
+- Begin outlining your project's design in `docs/design.md`.
+- To enable auto-publishing of your package to TestPyPI and PyPI (on pushes to `develop` and `main`, respectively) via the included GitHub Actions workflow:
+    1. In your new project, set `ENABLE_PUBLISHING` to `true` in `.github/workflows/publish.yml`.
+    2. Add the necessary `PYPI_API_TOKEN` (for PyPI) and `TEST_PYPI_API_TOKEN` (for TestPyPI) as GitHub Actions secrets to your new repository.
+- To enforce Git PR discipline in your new repository, consider creating Git branch protection rules or rulesets as outlined in PyHatchery's `docs/contributing.md` (adapt as needed for your project).
 
 Happy hacking!!!
 
-### Manual Setup
+## Understanding the Project Structure (Optional)
 
-If you prefer to set up manually, you can:
+PyHatchery creates projects based on its embedded template structure. This includes a standard layout for Python projects, such as:
 
-1. **Clone or Use Template:** Start your new project by cloning this repository or using it as a template on GitHub.
-2. **Customize:** Modify the project name, description, and other details in `pyproject.toml` and other configuration files.
-3. **Develop:** Add your project-specific code and logic.
-4. **Test:** Write and run tests for your code.
-5. **Build and Distribute:** Build your project and distribute it as needed.
+- `your_project_name/`: The main package directory.
+- `tests/`: For your unit and integration tests.
+- `docs/`: For project documentation.
+- `pyproject.toml`: Pre-configured for `uv`, `hatchling`, `ruff`, `pylint`, and your project metadata.
+- `LICENSE`: Typically an MIT License, personalized with your details.
+- `.gitignore`: A standard Python .gitignore file.
+- GitHub Actions workflows for testing and publishing.
+- `.pylintrc` and `.ruff.toml` settings files.
+
+This structure is designed to be a comprehensive starting point.
 
 ## Contributing
 
-Feedback on the template is highly welcome! Please open an issue to share your thoughts or suggestions.
+Feedback on PyHatchery itself is highly welcome! Please open an issue on the [PyHatchery GitHub repository](https://github.com/ksylvan/pyhatchery) to share your thoughts, suggestions, or report bugs.
 
 Read the [contribution document here](./docs/contributing.md) and please follow the guidelines for this repository.
 
 ## License
 
-Copyright (c) 2025, [Kayvan Sylvan](kayvan@sylvan.com) Licensed under the [MIT License](./LICENSE).
+PyHatchery is licensed under the [MIT License](./LICENSE).
+Generated projects will also include a personalized MIT License by default.
+
+Copyright (c) 2025, [Kayvan Sylvan](mailto:kayvan@sylvan.com)
+
+---
+[hatchling_url]: https://hatch.pypa.io/latest/
+[astral-uv]: https://github.com/astral-sh/uv

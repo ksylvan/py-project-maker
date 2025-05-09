@@ -3,7 +3,7 @@ requires = ["hatchling>=1.27.0"]
 build-backend = "hatchling.build"
 
 [project]
-name = "py-project-maker"
+name = "pyhatchery"
 dynamic = ["version"]
 description = "Add your description here"
 authors = [{ name = "Kayvan Sylvan", email = "kayvan@sylvan.com" }]
@@ -18,13 +18,13 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-"Homepage" = "https://github.com/ksylvan/py-project-maker"
-"Releases" = "https://github.com/ksylvan/py-project-maker/releases"
-"Bug Tracker" = "https://github.com/ksylvan/py-project-maker/issues"
-"Documentation" = "https://github.com/ksylvan/py-project-maker#readme"
+"Homepage" = "https://github.com/ksylvan/pyhatchery"
+"Releases" = "https://github.com/ksylvan/pyhatchery/releases"
+"Bug Tracker" = "https://github.com/ksylvan/pyhatchery/issues"
+"Documentation" = "https://github.com/ksylvan/pyhatchery#readme"
 
 # [tool.hatch.build.targets.wheel.shared-scripts]
-# "py_project_maker/bin/py-project-maker" = "py-project-maker"
+# "pyhatchery/bin/pyhatchery" = "pyhatchery"
 
 [dependency-groups]
 dev = [
@@ -42,7 +42,7 @@ python_files = "test_*.py"
 
 # Tell hatchling where to find the version variable
 [tool.hatch.version]
-path = "py_project_maker/__about__.py"
+path = "pyhatchery/__about__.py"
 
 [tool.uv]
 index = [
