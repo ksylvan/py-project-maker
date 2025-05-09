@@ -1,7 +1,7 @@
 # PyHatchery 🐍🥚
 
 <div align="center">
-<img src="./docs/hatchery_logo.jpg" alt="cute snake hatching" width="267" height="200">
+<img src="https://github.com/ksylvan/pyhatchery/blob/main/docs/hatchery_logo.jpg?raw=true" alt="cute snake hatching" width="267" height="200">
 </div>
 
 **Hatch new Python projects instantly!**
