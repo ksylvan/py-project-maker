@@ -1,11 +1,11 @@
-"""Main module for the py_project_maker package."""
+"""Main module for the pyhatchery package."""
 
-from py_project_maker import __version__
+from pyhatchery import __version__
 
 
 def main():
     """Main function to execute the script."""
-    print(f"Hello from py_project_maker! Version {__version__}.")
+    print(f"Hello from pyhatchery! Version {__version__}.")
 
 
 if __name__ == "__main__":
