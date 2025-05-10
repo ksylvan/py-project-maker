@@ -77,6 +77,8 @@ jobs:
       - name: Checkout code for version check
         uses: actions/checkout@v4
       - name: Check version bump
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           current_version="${{ needs.get_current_version.outputs.version }}"
           previous_version="${{ needs.get_develop_version.outputs.version }}"
