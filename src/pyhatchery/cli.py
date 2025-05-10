@@ -3,7 +3,7 @@
 import argparse
 import sys
 
-from .components.naming_service import pep503_name_ok
+from .components.name_service import pep503_name_ok
 
 
 def main(argv: list[str] | None = None) -> int:
