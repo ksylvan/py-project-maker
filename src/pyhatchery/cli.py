@@ -3,7 +3,7 @@
 import argparse
 import sys
 
-from .names import validate_project_name
+from .components.naming_service import pep503_name_ok
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -43,7 +43,7 @@ def main(argv: list[str] | None = None) -> int:
             return 1
 
         # Validate the project name using a helper function
-        is_valid, error_message = validate_project_name(args.project_name)
+        is_valid, error_message = pep503_name_ok(args.project_name)
         if not is_valid:
             print(error_message, file=sys.stderr)
             return 1

@@ -111,7 +111,7 @@ class TestCli:
         stdout, stderr, exit_code, _ = run_cli_capture_output(["new", invalid_name])
 
         assert (
-            f"Error: Project name '{invalid_name}' contains invalid characters."
+            f"Error: Project name '{invalid_name}' violates PEP 503 conventions."
             in stderr
         )
         assert stdout == ""
