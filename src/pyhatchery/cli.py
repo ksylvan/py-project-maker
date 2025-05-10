@@ -3,6 +3,7 @@
 import argparse
 import sys
 
+from .__about__ import __version__
 from .components.name_service import pep503_name_ok
 
 
@@ -20,6 +21,12 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="pyhatchery",  # Set program name for help messages
         description="PyHatchery: A Python project scaffolding tool.",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"pyhatchery {__version__}",
+        help="Show the version and exit.",
     )
     # Subparsers for commands like "new"
     subparsers = parser.add_subparsers(

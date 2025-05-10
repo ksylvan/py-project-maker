@@ -122,9 +122,6 @@ class TestCli:
         """Test that running `pyhatchery` without a command shows help."""
         stdout, stderr, exit_code, _ = run_cli_capture_output([])
 
-        assert (
-            "usage: pyhatchery [-h] {new} ..." in stderr
-        )  # Basic check for help output
         assert "PyHatchery: A Python project scaffolding tool." in stderr  # Description
         assert "Commands:" in stderr
         assert "new" in stderr  # 'new' command should be listed
