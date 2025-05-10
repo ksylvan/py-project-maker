@@ -1,0 +1,58 @@
+# How to use this reusable workflow:
+#
+# jobs:
+#   call-get-version:
+#     uses: ./.github/workflows/get-version.yml
+#     with:
+#       branch-name: 'main'  # Or any other branch
+#       file-path: 'src/pyhatchery/__about__.py' # Or the path to your version file
+#
+#   use-the-version:
+#     needs: call-get-version
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Echo version
+#         run: echo "The version is ${{ needs.call-get-version.outputs.version }}"
+
+name: Get Version
+
+on:
+  workflow_call:
+    inputs:
+      branch-name:
+        description: "The branch to get the version from"
+        required: true
+        type: string
+      file-path:
+        description: "The path to the file containing the version information"
+        required: true
+        type: string
+    outputs:
+      version:
+        description: "The version extracted from the specified file"
+        value: ${{ jobs.extract_version.outputs.version }}
+
+jobs:
+  extract_version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Clone specific branch and checkout specified file
+        run: |
+          git clone -b ${{ inputs.branch-name }} --no-checkout https://github.com/${{ github.repository }}.git temp_repo
+          cd temp_repo
+          git restore --staged ${{ inputs.file-path }}
+          git checkout -f ${{ inputs.file-path }}
+        shell: bash
+
+      - name: Extract version from specified file
+        id: get_version
+        run: |
+          version_line=$(grep "__version__ =" temp_repo/${{ inputs.file-path }})
+          version=$(echo "$version_line" | cut -d '"' -f 2)
+          echo "version=$version" >> $GITHUB_OUTPUT
+        shell: bash
