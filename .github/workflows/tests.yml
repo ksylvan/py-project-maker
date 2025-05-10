@@ -80,5 +80,5 @@ jobs:
             # gh CLI is pre-installed on GitHub-hosted runners and uses GITHUB_TOKEN automatically.
             gh pr comment ${{ github.event.number }} --body "$MESSAGE"
           else
-            echo "Version bump detected. Check passed."
+            echo "Version bump detected. Check passed. Going from $previous_version to $current_version."
           fi
