@@ -3,6 +3,7 @@
 import argparse
 import sys
 
+from .__about__ import __version__
 from .components.name_service import pep503_name_ok
 
 
@@ -21,6 +22,12 @@ def main(argv: list[str] | None = None) -> int:
         prog="pyhatchery",  # Set program name for help messages
         description="PyHatchery: A Python project scaffolding tool.",
     )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"pyhatchery {__version__}",
+        help="Show the version and exit.",
+    )
     # Subparsers for commands like "new"
     subparsers = parser.add_subparsers(
         dest="command", title="Commands", help="Available commands"
@@ -31,6 +38,8 @@ def main(argv: list[str] | None = None) -> int:
     new_parser.add_argument("project_name", help="The name of the project to create.")
 
     args = parser.parse_args(argv if argv is not None else sys.argv[1:])
+
+    # Check for version flag first (though argparse's action="version" should handle this automatically)
 
     if args.command == "new":
         if not args.project_name:  # Basic check, more robust validation later
