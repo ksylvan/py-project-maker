@@ -51,30 +51,35 @@ jobs:
             echo "Source branch is 'develop'. Check passed."
           fi
 
+  get_develop_version:
+    name: Get Develop Version
+    if: github.base_ref == 'develop' && github.event_name == 'pull_request'
+    uses: ./.github/workflows/get-version.yml
+    with:
+      branch-name: "develop"
+      file-path: "src/pyhatchery/__about__.py"
+
+  get_current_version:
+    name: Get Current Version
+    if: github.base_ref == 'develop' && github.event_name == 'pull_request'
+    uses: ./.github/workflows/get-version.yml
+    with:
+      branch-name: "${{ github.head_ref }}"
+      file-path: "src/pyhatchery/__about__.py"
+
   check_pr_version_bump:
     name: Check PR Version Bump
+    needs: [get_develop_version, get_current_version]
     runs-on: ubuntu-latest
     # Only run this check for pull requests targeting the develop branch
     if: github.base_ref == 'develop' && github.event_name == 'pull_request'
     steps:
       - name: Checkout code for version check
         uses: actions/checkout@v4
-      - name: Get version from __about__.py in develop
-        id: version_from_develop
-        uses: ./.github/workflows/get-version.yml
-        with:
-          branch-name: "develop"
-          file-path: "src/pyhatchery/__about__.py"
-      - name: Get version from __about__.py in current PR branch
-        id: version_from_current
-        uses: ./.github/workflows/get-version.yml
-        with:
-          branch-name: "${{ github.base_ref }}"
-          file-path: "src/pyhatchery/__about__.py"
       - name: Check version bump
         run: |
-          current_version="${{ steps.version_from_current.outputs.version }}"
-          previous_version="${{ steps.version_from_develop.outputs.version }}"
+          current_version="${{ needs.get_current_version.outputs.version }}"
+          previous_version="${{ needs.get_develop_version.outputs.version }}"
           if [[ "$current_version" == "$previous_version" ]]; then
             echo "Error: Version bump is required in the pull request. Version '$current_version' has not changed."
             MESSAGE="Error: Version bump is required in the pull request. The current version is \`$current_version\`. Please ensure the version in \`src/pyhatchery/__about__.py\` is incremented in this PR."
