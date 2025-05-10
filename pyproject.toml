@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "pyhatchery"
 dynamic = ["version"]
-description = "Add your description here"
+description = "PyHatchery: A Python project scaffolding tool."
 authors = [{ name = "Kayvan Sylvan", email = "kayvan@sylvan.com" }]
 readme = "README.md"
 requires-python = ">=3.11"
@@ -15,13 +15,16 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-dependencies = []
+dependencies = ["requests"]
 
 [project.urls]
 "Homepage" = "https://github.com/ksylvan/pyhatchery"
 "Releases" = "https://github.com/ksylvan/pyhatchery/releases"
 "Bug Tracker" = "https://github.com/ksylvan/pyhatchery/issues"
 "Documentation" = "https://github.com/ksylvan/pyhatchery#readme"
+
+[project.scripts]
+pyhatchery = "pyhatchery.cli:main"
 
 # [tool.hatch.build.targets.wheel.shared-scripts]
 # "pyhatchery/bin/pyhatchery" = "pyhatchery"

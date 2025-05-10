@@ -1,4 +1,4 @@
-"py_project_maker - A Python project template generator"
+"""PyHatchery: A Python project scaffolding tool."""
 
 from .__about__ import __version__
 
