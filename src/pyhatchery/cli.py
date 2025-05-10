@@ -39,8 +39,6 @@ def main(argv: list[str] | None = None) -> int:
 
     args = parser.parse_args(argv if argv is not None else sys.argv[1:])
 
-    # Check for version flag first (though argparse's action="version" should handle this automatically)
-
     if args.command == "new":
         if not args.project_name:  # Basic check, more robust validation later
             # argparse usually handles missing required arguments,

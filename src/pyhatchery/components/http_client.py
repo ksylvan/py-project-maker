@@ -37,14 +37,14 @@ def check_pypi_availability(package_name: str) -> Tuple[Optional[bool], Optional
             return True, None  # Name is taken
         if response.status_code == 404:
             return False, None  # Name is available
-        else:
-            response_content = response.text[:200] if response.text else "No content"
-            error_msg = (
-                f"PyPI check failed for '{package_name}'. "
-                f"Unexpected status code: {response.status_code}. "
-                f"Response content (truncated): {response_content}"
-            )
-            return None, error_msg
+
+        response_content = response.text[:200] if response.text else "No content"
+        error_msg = (
+            f"PyPI check failed for '{package_name}'. "
+            f"Unexpected status code: {response.status_code}. "
+            f"Response content (truncated): {response_content}"
+        )
+        return None, error_msg
 
     except requests.exceptions.Timeout:
         error_msg = (
