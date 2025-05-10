@@ -78,11 +78,12 @@ Start developing!
 After your project is hatched, you might want to:
 
 - Review the generated `README.md` in your new project and fill in your project's specific details.
-- Begin outlining your project's design in `docs/design.md`.
+- Begin outlining your project's purpose and vision in a [project brief][project_brief] document.
 - To enable auto-publishing of your package to TestPyPI and PyPI (on pushes to `develop` and `main`, respectively) via the included GitHub Actions workflow:
     1. In your new project, set `ENABLE_PUBLISHING` to `true` in `.github/workflows/publish.yml`.
     2. Add the necessary `PYPI_API_TOKEN` (for PyPI) and `TEST_PYPI_API_TOKEN` (for TestPyPI) as GitHub Actions secrets to your new repository.
-- To enforce Git PR discipline in your new repository, consider creating Git branch protection rules or rulesets as outlined in PyHatchery's `docs/contributing.md` (adapt as needed for your project).
+- To enforce Git PR discipline in your new repository, consider creating Git branch protection rules or rulesets as outlined in
+  PyHatchery's `docs/contributing.md` (adapt as needed for your project).
 
 Happy hacking!!!
 
@@ -117,3 +118,4 @@ Copyright (c) 2025, [Kayvan Sylvan](mailto:kayvan@sylvan.com)
 ---
 [hatchling_url]: https://hatch.pypa.io/latest/
 [astral-uv]: https://github.com/astral-sh/uv
+[project_brief]: ./docs/project_brief.md
