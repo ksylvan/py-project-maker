@@ -37,7 +37,7 @@ def pep503_name_ok(project_name: str) -> tuple[bool, str | None]:
     Implemented checks
     ------------------
     1. PEP503 compliance: Must start and end with a letter or digit, and may contain
-      letters, digits, periods, underscores, or hyphens in between
+       letters, digits, periods, underscores, or hyphens in between
     2. ASCII only: Only ASCII characters are allowed
     3. Short: 32 chars max (pragmatic upper bound)
     4. Limited underscores: No more than 2 underscores allowed
