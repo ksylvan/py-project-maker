@@ -38,9 +38,6 @@ jobs:
     outputs:
       version: ${{ steps.get_version.outputs.version }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Clone specific branch and checkout specified file
         run: |
           git clone -b ${{ inputs.branch-name }} --no-checkout https://github.com/${{ github.repository }}.git temp_repo
