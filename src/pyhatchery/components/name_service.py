@@ -36,13 +36,11 @@ def pep503_name_ok(project_name: str) -> tuple[bool, str | None]:
 
     Implemented checks
     ------------------
-    1. **PEP503 compliance**: Must start with a letter, must end with a letter or digit,
-       may contain letters, digits, periods, underscores, or hyphens in between
-    2. **Case insensitive**: Both lowercase and uppercase letters are allowed,
-       but they are treated as the same character.
-    3. **ASCII only**: Only ASCII characters are allowed
-    4. **Short**: 32 chars max (pragmatic upper bound)
-    5. **Limited underscores**: No more than 2 underscores allowed
+    1. PEP503 compliance: Must start and end with a letter or digit, and may contain
+      letters, digits, periods, underscores, or hyphens in between
+    3. ASCII only: Only ASCII characters are allowed
+    4. Short: 32 chars max (pragmatic upper bound)
+    5. Limited underscores: No more than 2 underscores allowed
     """
     if not _PEP503_VALID_RE.match(project_name):
         return (
