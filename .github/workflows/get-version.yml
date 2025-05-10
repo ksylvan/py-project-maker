@@ -35,7 +35,15 @@ jobs:
       - name: Extract version from specified file
         id: get_version
         run: |
-          version_line=$(grep "__version__ =" temp_repo/${{ inputs.file-path }})
+          version_line=$(grep "__version__ =" temp_repo/${{ inputs.file-path }} || true)
+          if [[ -z "$version_line" ]]; then
+            echo "Error: Version line not found in file: ${{ inputs.file-path }}" >&2
+            exit 1
+          fi
           version=$(echo "$version_line" | cut -d '"' -f 2)
+          if [[ -z "$version" || ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Extracted version is invalid: $version" >&2
+            exit 1
+          fi
           echo "version=$version" >> $GITHUB_OUTPUT
         shell: bash
