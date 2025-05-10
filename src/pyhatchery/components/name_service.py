@@ -13,6 +13,9 @@ def pep503_normalize(name: str) -> str:
     """Return the canonical PEP-503 form: lower-case, runs of . _ - become '-'.
     See https://peps.python.org/pep-0503 for more details.
 
+    The name is normalized to lowercase, and runs of periods, underscores, and hyphens
+    are replaced with a single hyphen, which are then normalized to lowercase
+
     Args:
         name (str): The name to canonicalize.
     Returns:
@@ -33,12 +36,13 @@ def pep503_name_ok(project_name: str) -> tuple[bool, str | None]:
 
     Implemented checks
     ------------------
-    1. **Valid identifier**: letters/digits/underscores, not starting with a digit
-    2. **All lowercase**: no capital letters
-    3. **No punctuation**: hyphens, dots, spaces, etc. are disallowed
-    4. **Short**: 32 chars max (PEP8 says “short”; this is a practical upper bound)
-    5. **Underscores discouraged**: allowed, but a leading “_” (used only for C
-       extension helpers) or multiple underscores fail the test
+    1. **PEP503 compliance**: Must start with a letter, must end with a letter or digit,
+       may contain letters, digits, periods, underscores, or hyphens in between
+    2. **Case insensitive**: Both lowercase and uppercase letters are allowed,
+       but they are treated as the same character.
+    3. **ASCII only**: Only ASCII characters are allowed
+    4. **Short**: 32 chars max (pragmatic upper bound)
+    5. **Limited underscores**: No more than 2 underscores allowed
     """
     if not _PEP503_VALID_RE.match(project_name):
         return (
