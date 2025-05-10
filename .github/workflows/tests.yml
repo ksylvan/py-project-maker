@@ -57,7 +57,8 @@ jobs:
     # Only run this check for pull requests targeting the develop branch
     if: github.base_ref == 'develop' && github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code for version check
+        uses: actions/checkout@v4
       - name: Get version from __about__.py in develop
         id: version_from_develop
         uses: ./.github/workflows/get-version.yml
