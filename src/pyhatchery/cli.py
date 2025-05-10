@@ -3,6 +3,8 @@
 import argparse
 import sys
 
+from .names import validate_project_name
+
 
 def main(argv: list[str] | None = None) -> int:
     """
@@ -40,16 +42,9 @@ def main(argv: list[str] | None = None) -> int:
             new_parser.print_help(sys.stderr)
             return 1
 
-        # Further validation for project_name (AC3)
-        # For now, just a placeholder for basic character validation.
-        # A simple check: does it contain only alphanumeric, hyphen, underscore?
-        # This is a very basic check. More robust validation
-        # (e.g. not starting/ending with hyphen) later.
-        if not all(c.isalnum() or c in ["-", "_"] for c in args.project_name):
-            error_message = (
-                f"Error: Project name '{args.project_name}' "
-                "contains invalid characters."
-            )
+        # Validate the project name using a helper function
+        is_valid, error_message = validate_project_name(args.project_name)
+        if not is_valid:
             print(error_message, file=sys.stderr)
             return 1
 
