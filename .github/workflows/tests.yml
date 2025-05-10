@@ -92,8 +92,7 @@ jobs:
             MESSAGE="Error: Version bump is required in the pull request. The current version is \`$current_version\`. Please ensure the version in \`src/pyhatchery/__about__.py\` is incremented in this PR."
             # Post the comment to the PR. ${{ github.event.number }} is the PR number.
             # gh CLI is pre-installed on GitHub-hosted runners and uses GITHUB_TOKEN automatically.
-            gh pr review ${{ github.event.number }} --comment --body "$MESSAGE"
-            gh pr review ${{ github.event.number }} --request-changes
+            gh pr review ${{ github.event.number }} --request-changes --body "$MESSAGE"
           else
             echo "Version bump detected. Check passed. Going from $previous_version to $current_version."
           fi
