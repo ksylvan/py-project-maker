@@ -160,3 +160,13 @@ We use GitHub Actions (`.github/workflows/`) to automate testing (`tests.yml`) a
 Pull requests must pass the checks defined in `tests.yml` before they can be merged.
 
 Thank you for contributing!
+
+## References
+
+* [PyHatchery Tech Stack][techstack]
+* [Architecture][architecture]
+* [Product Requirements Document][PRD]
+
+[techstack]: ./tech_stack.md
+[architecture]: ./architecture.md
+[PRD]: ./prd.md
