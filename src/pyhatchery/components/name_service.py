@@ -11,23 +11,36 @@ _MAX_LEN = 32  # “short”: pragmatic cap
 
 
 def pep503_normalize(name: str) -> str:
-    """Return the canonical PEP-503 form: lower-case, runs of . _ - become '-'.
-    See https://peps.python.org/pep-0503 for more details.
+    """Return a PEP 503-compatible normalized slug from the input name.
+    Normalization involves:
+    1. Converting to lowercase.
+    2. Replacing any character not in [a-z0-9._-] with a hyphen.
+    3. Replacing all runs of the characters ., _, or - with a single hyphen.
+    4. Stripping leading/trailing hyphens.
 
-    The name is normalized to lowercase, and runs of periods, underscores, and hyphens
-    are replaced with a single hyphen, which are then normalized to lowercase
+    This ensures the resulting slug is suitable for use in contexts
+    expecting PEP 503 normalized names, even if the input contained
+    characters outside the typical set.
+
+    See https://peps.python.org/pep-0503 for the base normalization rules.
 
     Args:
-        name (str): The name to canonicalize.
+        name (str): The name to normalize and slugify.
     Returns:
-        str: The PEP503 normalized name.
-
+        str: The PEP 503-compatible normalized slug.
     """
-    # Strip leading/trailing whitespace and replace internal spaces with hyphens
-    name = name.strip()
-    name = re.sub(r"\s+", "-", name)
-    # Replace runs of separators with a single hyphen
-    return re.sub(r"[-_.]+", "-", name).lower()
+    # Step 1: Convert the string to lowercase
+    name = name.lower()
+
+    # Step 2: Replace any character not in [a-z0-9._-] with a hyphen
+    name = re.sub(r"[^a-z0-9._-]+", "-", name)
+
+    # Step 3: Collapse consecutive invalid characters (., _, -) into a single hyphen
+    name = re.sub(r"[-_.]+", "-", name)
+
+    # Step 4: Strip leading and trailing hyphens
+    name = name.strip("-")
+    return name
 
 
 def derive_python_package_slug(name: str) -> str:
@@ -126,13 +139,44 @@ def pep503_name_ok(project_name: str) -> tuple[bool, str | None]:
     if not _PEP503_VALID_RE.match(project_name):
         return (
             False,
-            f"Error: Project name '{project_name}' violates PEP 503 conventions.",
+            f"Project name '{project_name}' violates PEP 503 conventions.",
         )
     if len(project_name) > _MAX_LEN:
         return (
             False,
-            f"Error: Project name '{project_name}' is too long (max {_MAX_LEN} chars).",
+            f"Project name '{project_name}' is too long (max {_MAX_LEN} chars).",
         )
-    if project_name.count("_") > 2:  # keep names terse/readable
-        return False, "Error: Project name cannot contain too many underscores."
+    if (
+        project_name.count("_") + project_name.count("-")
+    ) > 2:  # keep names terse/readable
+        return False, "Project name contains too many underscores or dashes."
     return True, None
+
+
+def has_invalid_characters(name: str) -> tuple[bool, str | None]:
+    """
+    Check if the project name contains characters that are not allowed.
+    This is a stricter check than PEP503 normalization, which simply
+    replaces invalid chars.
+
+    Some characters like '!' should be rejected outright rather than
+    silently normalized.
+
+    Args:
+        name: The project name to check for invalid characters
+
+    Returns:
+        tuple[bool, str | None]: (has_invalid, error_message)
+            - has_invalid: True if the name contains invalid characters
+            - error_message: The invalid characters found, or None if valid
+    """
+    # List of characters that should cause immediate rejection
+    invalid_chars = "!@#$%^&*+=}{[]|\\/:;\"'<>"
+
+    found_invalid = [char for char in invalid_chars if char in name]
+
+    if found_invalid:
+        chars_str = ", ".join([f"'{c}'" for c in found_invalid])
+        return True, f"Project name contains invalid characters: {chars_str}"
+
+    return False, None

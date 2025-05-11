@@ -56,7 +56,7 @@ class TestCli:
 
     # Test for original success case, now needs mocks for new validation steps
     @patch("pyhatchery.cli.pep503_name_ok", return_value=(True, None))
-    @patch("pyhatchery.cli.pep503_normalize", return_value="mocked-pypi-slug")
+    @patch("pyhatchery.cli.pep503_normalize", return_value="my-new-project")
     @patch(
         "pyhatchery.cli.derive_python_package_slug", return_value="mocked_python_slug"
     )
@@ -76,12 +76,13 @@ class TestCli:
         mock_pep503_ok: MagicMock,
     ):
         """Test `pyhatchery new project_name` succeeds with no warnings."""
-        project_name = "my_new_project"
+        project_name = "my-new-project"  # Already normalized
+        normalized_name = project_name  # Mock should return same name
         stdout, stderr, exit_code, _ = run_cli_capture_output(["new", project_name])
 
-        expected_stdout = f"Creating new project: {project_name}\n"
+        expected_stdout = f"Creating new project: {normalized_name}\n"
         # Stderr will contain the debug prints for slugs
-        expected_stderr_part_pypi = "Derived PyPI slug: mocked-pypi-slug"
+        expected_stderr_part_pypi = "Derived PyPI slug: my-new-project"
         expected_stderr_part_python = "Derived Python package slug: mocked_python_slug"
 
         assert stdout == expected_stdout
@@ -93,7 +94,7 @@ class TestCli:
         mock_pep503_ok.assert_called_once_with(project_name)
         mock_normalize.assert_called_once_with(project_name)
         mock_derive_python_slug.assert_called_once_with(project_name)
-        mock_check_pypi.assert_called_once_with("mocked-pypi-slug")
+        mock_check_pypi.assert_called_once_with("my-new-project")
         mock_is_valid_python_slug.assert_called_once_with("mocked_python_slug")
 
     def test_new_project_no_name_ac2(self):
@@ -113,18 +114,6 @@ class TestCli:
 
     def test_new_project_empty_name_string_ac3(self):
         """AC3: Invalid project names (empty string) result in an error."""
-        # Argparse might catch this, or our explicit check might.
-        # If argparse catches it as a missing argument
-        # (if it treats "" as missing), exit code 2.
-        # If our code catches it, exit code 1.
-        # Let's assume our code's explicit check for an empty string is not hit
-        # because argparse might not allow an empty string for a positional
-        # argument if it's not quoted.
-        # However, if it *is* passed as `pyhatchery new ""`,
-        # then our code should catch it.
-        # The current cli.py has `if not args.project_name:`,
-        # which would catch an empty string.
-
         # Test with an explicitly empty string argument
         stdout, stderr, exit_code, _ = run_cli_capture_output(["new", ""])
 
@@ -159,12 +148,11 @@ class TestCli:
         mock_pep503_ok: MagicMock,
     ):
         """Test warning for initial project name format, but still proceeds."""
-        invalid_name = (
-            "Invalid_Project_Name_Caps"  # Example that might fail pep503_name_ok
-        )
+        invalid_name = "Invalid_Project_Name_Caps"
         stdout, stderr, exit_code, _ = run_cli_capture_output(["new", invalid_name])
 
-        assert f"Creating new project: {invalid_name}" in stdout
+        # Should show normalized name, which comes from the mock
+        assert "Creating new project: pypi-slug" in stdout
         assert (
             f"Warning: Project name '{invalid_name}': Initial name format error."
             in stderr
@@ -196,7 +184,8 @@ class TestCli:
         project_name = "someproject"
         stdout, stderr, exit_code, _ = run_cli_capture_output(["new", project_name])
 
-        assert f"Creating new project: {project_name}" in stdout
+        # Should show normalized name from mock
+        assert "Creating new project: taken-pypi-name" in stdout
         assert (
             "Warning: The name 'taken-pypi-name' might already be taken on PyPI."
             in stderr
@@ -228,7 +217,8 @@ class TestCli:
         project_name = "someproject"
         stdout, stderr, exit_code, _ = run_cli_capture_output(["new", project_name])
 
-        assert f"Creating new project: {project_name}" in stdout
+        # Should show normalized name from mock
+        assert "Creating new project: pypi-name" in stdout
         expected_warning = (
             "Warning: PyPI availability check for 'pypi-name' failed: "
             "Network error during PyPI check"
@@ -237,7 +227,7 @@ class TestCli:
         assert exit_code == 0
 
     @patch("pyhatchery.cli.pep503_name_ok", return_value=(True, None))
-    @patch("pyhatchery.cli.pep503_normalize", return_value="pypi-name")
+    @patch("pyhatchery.cli.pep503_normalize", return_value="someprojectwithcaps")
     @patch(
         "pyhatchery.cli.derive_python_package_slug", return_value="Invalid_Python_Slug"
     )
@@ -261,10 +251,12 @@ class TestCli:
         project_name = "SomeProjectWithCaps"
         stdout, stderr, exit_code, _ = run_cli_capture_output(["new", project_name])
 
-        assert f"Creating new project: {project_name}" in stdout
+        # Should show normalized name from mock
+        assert "Creating new project: someprojectwithcaps" in stdout
+        # Update expected warning to use normalized name as the input reference
         expected_warning = (
             "Warning: Derived Python package name 'Invalid_Python_Slug' "
-            "(from input 'SomeProjectWithCaps') is not PEP 8 compliant: "
+            "(from input 'someprojectwithcaps') is not PEP 8 compliant: "
             "Not PEP 8 compliant error message."
         )
         assert expected_warning in stderr
@@ -273,7 +265,7 @@ class TestCli:
     @patch(
         "pyhatchery.cli.pep503_name_ok", return_value=(False, "Initial name problem.")
     )
-    @patch("pyhatchery.cli.pep503_normalize", return_value="taken-pypi-name")
+    @patch("pyhatchery.cli.pep503_normalize", return_value="problematicname")
     @patch(
         "pyhatchery.cli.derive_python_package_slug", return_value="Invalid_Python_Slug"
     )
@@ -295,21 +287,23 @@ class TestCli:
         project_name = "ProblematicName"
         stdout, stderr, exit_code, _ = run_cli_capture_output(["new", project_name])
 
-        assert f"Creating new project: {project_name}" in stdout
+        # Should show normalized name from mock
+        assert "Creating new project: problematicname" in stdout
         assert (
             f"Warning: Project name '{project_name}': Initial name problem." in stderr
         )
         assert (
-            "Warning: The name 'taken-pypi-name' might already be taken on PyPI."
+            "Warning: The name 'problematicname' might already be taken on PyPI."
             in stderr
         )
+        # Update expected warning to use normalized name as the input reference
         expected_warning_python_slug = (
             "Warning: Derived Python package name 'Invalid_Python_Slug' "
-            "(from input 'ProblematicName') is not PEP 8 compliant: "
+            "(from input 'problematicname') is not PEP 8 compliant: "
             "Python slug invalid message."
         )
         assert expected_warning_python_slug in stderr
-        assert "Derived PyPI slug: taken-pypi-name" in stderr
+        assert "Derived PyPI slug: problematicname" in stderr
         assert "Derived Python package slug: Invalid_Python_Slug" in stderr
         assert exit_code == 0
 

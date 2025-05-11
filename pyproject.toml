@@ -15,7 +15,10 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-dependencies = ["requests"]
+dependencies = [
+    "click>=8.1.8",
+    "requests>=2.32.3",
+]
 
 [project.urls]
 "Homepage" = "https://github.com/ksylvan/pyhatchery"
