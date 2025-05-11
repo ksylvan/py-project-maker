@@ -1,5 +1,11 @@
 # PyHatchery 🐍🥚
 
+[![License: MIT][mit_license]][mit_license_link]
+
+| main  |   |  | develop  |   |
+|:---:|:---:|:---:|:---:|:---:|
+| [![Main Tests][main_tests]][main_tests_link] | [![Main Publish][main_publish]][main_publish_link] |  | [![Develop Tests][develop_tests]][develop_tests_link] | [![Develop Publish][develop_publish]][develop_publish_link] |
+
 <div align="center">
 <img src="https://github.com/ksylvan/pyhatchery/blob/main/docs/hatchery_logo.jpg?raw=true" alt="cute snake hatching" width="267" height="200">
 </div>
@@ -90,7 +96,7 @@ Happy hacking!!!
 
 PyHatchery creates projects based on its embedded template structure. This includes a standard layout for Python projects, such as:
 
-- `your_project_name/`: The main package directory.
+- `src/your_project_name/`: The main package directory.
 - `tests/`: For your unit and integration tests.
 - `docs/`: For project documentation.
 - `pyproject.toml`: Pre-configured for `uv`, `hatchling`, `ruff`, `pylint`, and your project metadata.
@@ -115,7 +121,17 @@ Generated projects will also include a personalized MIT License by default.
 Copyright (c) 2025, [Kayvan Sylvan](mailto:kayvan@sylvan.com)
 
 ---
-[hatchling_url]: https://hatch.pypa.io/latest/
 [astral-uv]: https://github.com/astral-sh/uv
-[project_brief]: ./docs/project_brief.md
 [contributing]: ./docs/contributing.md
+[develop_publish_link]: https://github.com/ksylvan/pyhatchery/actions/workflows/publish.yml?branch=develop
+[develop_publish]: https://github.com/ksylvan/pyhatchery/actions/workflows/publish.yml/badge.svg?branch=develop
+[develop_tests_link]: https://github.com/ksylvan/pyhatchery/actions/workflows/tests.yml?branch=develop
+[develop_tests]: https://github.com/ksylvan/pyhatchery/actions/workflows/tests.yml/badge.svg?branch=develop
+[hatchling_url]: https://hatch.pypa.io/latest/
+[main_publish_link]: https://github.com/ksylvan/pyhatchery/actions/workflows/publish.yml
+[main_publish]: https://github.com/ksylvan/pyhatchery/actions/workflows/publish.yml/badge.svg
+[main_tests_link]: https://github.com/ksylvan/pyhatchery/actions/workflows/tests.yml
+[main_tests]: https://github.com/ksylvan/pyhatchery/actions/workflows/tests.yml/badge.svg
+[mit_license_link]: https://opensource.org/licenses/MIT
+[mit_license]: https://img.shields.io/badge/License-MIT-yellow.svg
+[project_brief]: ./docs/project_brief.md
