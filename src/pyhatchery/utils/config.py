@@ -21,10 +21,9 @@ def str_to_bool(value: Optional[str]) -> bool:
     value = value.lower()
     if value in TRUTHY_STRINGS:
         return True
-    elif value in FALSY_STRINGS:
+    if value in FALSY_STRINGS:
         return False
-    else:
-        raise ValueError(
-            f"Invalid boolean string: {value} - "
-            f"must be one of {TRUTHY_STRINGS + FALSY_STRINGS}"
-        )
+    raise ValueError(
+        f"Invalid boolean string: {value} - "
+        f"must be one of {TRUTHY_STRINGS + FALSY_STRINGS}"
+    )

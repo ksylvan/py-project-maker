@@ -44,16 +44,19 @@ class TestPromptForValue:
         mock_input.assert_called_once_with("Enter something: ")
 
     @patch(f"{MODULE_PATH}.input")
-    @patch(f"{MODULE_PATH}.print")  # To capture print calls for "cannot be empty"
+    @patch(f"{MODULE_PATH}.click")  # To capture click calls for "cannot be empty"
     def test_prompt_no_default_user_enters_empty_then_value(
-        self, mock_print: MagicMock, mock_input: MagicMock
+        self, mock_click: MagicMock, mock_input: MagicMock
     ):
         """Test no default, user enters empty string then a valid value."""
         mock_input.side_effect = ["", "User Value"]  # First empty, then value
         result = prompt_for_value("Enter something")
         assert result == "User Value"
         assert mock_input.call_count == 2
-        mock_print.assert_called_once_with("This field cannot be empty.")
+        # Updated assertion to check for click.secho with fg='red'
+        mock_click.secho.assert_called_once_with(
+            "This field cannot be empty.", fg="red"
+        )
 
 
 class TestPromptForChoice:
@@ -63,9 +66,9 @@ class TestPromptForChoice:
     default = "Beta"
 
     @patch(f"{MODULE_PATH}.input")
-    @patch(f"{MODULE_PATH}.print")  # To check prompts
+    @patch(f"{MODULE_PATH}.click")  # To check prompts
     def test_selects_valid_choice_by_number(
-        self, mock_print: MagicMock, mock_input: MagicMock
+        self, mock_click: MagicMock, mock_input: MagicMock
     ):
         """Test selecting a valid choice by its number."""
         mock_input.return_value = "1"  # Selects "Alpha"
@@ -73,12 +76,15 @@ class TestPromptForChoice:
         assert result == "Alpha"
         # Check that choices were printed correctly
         expected_calls = [
-            call("Choose:"),
-            call("  1. Alpha"),
-            call("  2. Beta (default)"),
-            call("  3. Gamma"),
+            call.secho("Choose:", fg="cyan"),
+            call.secho("  1. Alpha"),
+            call.secho("  2. Beta", fg="green", bold=True, nl=False),
+            call.secho(" (default)", fg="green"),
+            call.secho("  3. Gamma"),
         ]
-        mock_print.assert_has_calls(expected_calls, any_order=False)
+        # Updated to check mock_click.method_calls directly
+        actual_calls = mock_click.method_calls
+        assert actual_calls == expected_calls
 
     @patch(f"{MODULE_PATH}.input")
     def test_accepts_default_choice_on_enter(self, mock_input: MagicMock):
@@ -88,9 +94,9 @@ class TestPromptForChoice:
         assert result == self.default
 
     @patch(f"{MODULE_PATH}.input")
-    @patch(f"{MODULE_PATH}.print")
+    @patch(f"{MODULE_PATH}.click")
     def test_handles_invalid_numeric_choice_then_valid(
-        self, mock_print: MagicMock, mock_input: MagicMock
+        self, mock_click: MagicMock, mock_input: MagicMock
     ):
         """Test handling invalid numeric choices before a valid one."""
         mock_input.side_effect = ["0", "4", "2"]  # Invalid, Invalid, Valid ("Beta")
@@ -101,26 +107,31 @@ class TestPromptForChoice:
         error_message = f"Invalid choice. Enter a number from 1 to {len(self.choices)}."
         # Check error messages were printed for each invalid input.
         # Skips initial prompt and choice listing.
-        calls_to_check = mock_print.call_args_list[
-            1 + len(self.choices) :
-        ]  # Skip prompt and choices
+        # The number of initial secho calls for prompt and choices:
+        # 1 for prompt_message
+        # 1 for each choice (self.choices)
+        # 1 extra for the default choice's "(default)" part
+        initial_secho_calls = 1 + len(self.choices) + 1
+        calls_to_check = mock_click.method_calls[initial_secho_calls:]
         assert all(
-            call(error_message) in calls_to_check
+            call.secho(error_message, fg="red") in calls_to_check
             for _ in range(mock_input.call_count - 1)
         )
 
     @patch(f"{MODULE_PATH}.input")
-    @patch(f"{MODULE_PATH}.print")
+    @patch(f"{MODULE_PATH}.click")
     def test_handles_non_numeric_choice_then_valid(
-        self, mock_print: MagicMock, mock_input: MagicMock
+        self, mock_click: MagicMock, mock_input: MagicMock
     ):
         """Test handling of non-numeric input before a valid numeric choice."""
         mock_input.side_effect = ["abc", "3"]  # Invalid, Valid ("Gamma")
         result = prompt_for_choice("Choose:", self.choices, self.default)
         assert result == "Gamma"
         assert mock_input.call_count == 2
+        # Updated assertion to check for click.secho with fg='red'
         assert (
-            call("Invalid input. Please enter a number.") in mock_print.call_args_list
+            call.secho("Invalid input. Please enter a number.", fg="red")
+            in mock_click.method_calls
         )
 
 

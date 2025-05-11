@@ -5,6 +5,8 @@ to gather project details.
 
 from typing import Dict, List, Optional
 
+import click
+
 from pyhatchery.components.config_loader import get_git_config_value
 
 # Predefined choices for license and Python versions
@@ -14,7 +16,9 @@ DEFAULT_PYTHON_VERSION: str = "3.11"
 DEFAULT_LICENSE: str = "MIT"
 
 
-def prompt_for_value(prompt_message: str, default_value: Optional[str] = None) -> str:
+def prompt_for_value(
+    prompt_message: str, default_value: Optional[str] = None, max_retries: int = 3
+) -> str | None:
     """Helper function to prompt user for input with a default."""
     if default_value:
         prompt_with_default = f"{prompt_message} (default: {default_value}): "
@@ -24,22 +28,33 @@ def prompt_for_value(prompt_message: str, default_value: Optional[str] = None) -
         return default_value
 
     prompt_no_default = f"{prompt_message}: "
-    while True:
+    retries = 0
+    while retries < max_retries:
         user_input = input(prompt_no_default).strip()
         if user_input:
             return user_input
-        print("This field cannot be empty.")
+        click.secho("This field cannot be empty.", fg="red")
+        retries += 1
+
+    raise ValueError(
+        f"Maximum retry limit ({max_retries}) reached. No valid input provided."
+    )
 
 
 def prompt_for_choice(
-    prompt_message: str, choices: List[str], default_choice: str
-) -> str:
-    """Helper function to prompt user to select from a list of choices."""
-    print(prompt_message)
+    prompt_message: str, choices: List[str], default_choice: str, max_retries: int = 3
+) -> str | None:
+    "Helper function to prompt user to select from choices with retry limit."
+    click.secho(prompt_message, fg="cyan")
     for i, choice in enumerate(choices):
-        print(f"  {i + 1}. {choice}{' (default)' if choice == default_choice else ''}")
+        if choice == default_choice:
+            click.secho(f"  {i + 1}. {choice}", fg="green", bold=True, nl=False)
+            click.secho(" (default)", fg="green")
+        else:
+            click.secho(f"  {i + 1}. {choice}")
 
-    while True:
+    retries = 0
+    while retries < max_retries:
         try:
             raw_selection = input(
                 f"Enter your choice (1-{len(choices)}, default is {default_choice}): "
@@ -49,11 +64,13 @@ def prompt_for_choice(
             selection = int(raw_selection)
             if 1 <= selection <= len(choices):
                 return choices[selection - 1]
-            print(  # De-indented from else
-                f"Invalid choice. Enter a number from 1 to {len(choices)}."
-            )
+            message = f"Invalid choice. Enter a number from 1 to {len(choices)}."
+            click.secho(message, fg="red")
         except ValueError:
-            print("Invalid input. Please enter a number.")
+            click.secho("Invalid input. Please enter a number.", fg="red")
+    raise ValueError(
+        f"Maximum retry limit ({max_retries}) reached. No valid input provided."
+    )
 
 
 def collect_project_details(
@@ -70,46 +87,67 @@ def collect_project_details(
         A dictionary containing the collected project details, or None if the user
         chooses not to proceed after warnings.
     """
-    print("-" * 30)
-    print(f"Configuring project: {project_name}")
-    print("-" * 30)
+    click.secho("-" * 30, fg="blue")
+    click.secho(f"Configuring project: {project_name}", fg="blue", bold=True)
+    click.secho("-" * 30, fg="blue")
 
     if name_warnings:
-        print("\nProject Name Warnings:")
+        click.secho("\nProject Name Warnings:", fg="yellow", bold=True)
         for warning in name_warnings:
-            print(f"  - {warning}")
+            click.secho(f"  - {warning}", fg="yellow")
         proceed_prompt = "Proceed with this name? (yes/no, default: yes): "
         proceed = input(proceed_prompt).strip().lower()
         if proceed in {"no", "n"}:
-            print("Exiting project generation.")
+            click.secho("Exiting project generation.", fg="red")
             return None
-        print("-" * 30)  # Separator after handling warnings
+        click.secho("-" * 30, fg="blue")
 
     author_name_default = get_git_config_value("user.name")
     author_email_default = get_git_config_value("user.email")
 
     details: Dict[str, str] = {}
 
-    details["author_name"] = prompt_for_value("Author Name", author_name_default)
-    details["author_email"] = prompt_for_value("Author Email", author_email_default)
-    details["github_username"] = prompt_for_value("GitHub Username")
-    details["project_description"] = prompt_for_value("Project Description")
+    try:
+        _author, _email, _username, _desc, _license, _python_version = (
+            prompt_for_value("Author Name", author_name_default),
+            prompt_for_value("Author Email", author_email_default),
+            prompt_for_value("GitHub Username"),
+            prompt_for_value("Project Description"),
+            prompt_for_choice("Select License:", COMMON_LICENSES, DEFAULT_LICENSE),
+            prompt_for_choice(
+                "Select Python Version:", PYTHON_VERSIONS, DEFAULT_PYTHON_VERSION
+            ),
+        )
+    except ValueError as e:
+        click.secho(f"Error: {e}", fg="red", bold=True)
+        click.secho("Exiting project generation.", fg="red")
+        return None
+    except KeyboardInterrupt:
+        click.secho("\nUser interrupted the process.", fg="yellow")
+        return None
+    except EOFError:
+        click.secho("\nEnd of file reached. Exiting.", fg="yellow")
+        return None
 
-    details["license"] = prompt_for_choice(
-        "Select License:", COMMON_LICENSES, DEFAULT_LICENSE
-    )
-    details["python_version_preference"] = prompt_for_choice(
-        "Select Python Version:", PYTHON_VERSIONS, DEFAULT_PYTHON_VERSION
-    )
+    # The default "" for the below fields can not happen, because the exception
+    # handling code above will have already returned None if any of the prompt_for_value
+    # calls raise a ValueError exception
+    # So we can safely assume that the user has provided valid input
+    details["author_name"] = _author or ""
+    details["author_email"] = _email or ""
+    details["github_username"] = _username or ""
+    details["project_description"] = _desc or ""
+    details["license"] = _license or ""
+    details["python_version_preference"] = _python_version or ""
 
-    print("-" * 30)
-    print("Project details collected.")
+    click.secho("-" * 30, fg="blue")
+    click.secho("Project details collected.", fg="green", bold=True)
     return details
 
 
 if __name__ == "__main__":
     # Example usage for testing the wizard directly
-    print("Testing Interactive Wizard...")
+    click.secho("Testing Interactive Wizard...", fg="magenta", bold=True)
     # Simulate some name warnings
     test_warnings = [
         "The name 'Test-Project' might already be taken on PyPI.",
@@ -119,13 +157,15 @@ if __name__ == "__main__":
         "My Test Project", name_warnings=test_warnings
     )
     if collected_info:
-        print("\nCollected Information:")
+        click.secho("\nCollected Information:", fg="magenta", bold=True)
         for key, value in collected_info.items():
-            print(f"  {key}: {value}")
+            click.secho(f"  {key}: {value}", fg="magenta")
 
-    print("\nTesting Interactive Wizard (no warnings)...")
+    click.secho(
+        "\nTesting Interactive Wizard (no warnings)...", fg="magenta", bold=True
+    )
     collected_info_no_warn = collect_project_details("Another Project")
     if collected_info_no_warn:
-        print("\nCollected Information (no warnings):")
+        click.secho("\nCollected Information (no warnings):", fg="magenta", bold=True)
         for key, value in collected_info_no_warn.items():
-            print(f"  {key}: {value}")
+            click.secho(f"  {key}: {value}", fg="magenta")
