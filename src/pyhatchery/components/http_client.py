@@ -7,6 +7,7 @@ primarily for checking package name availability on PyPI.
 
 from typing import Optional, Tuple
 
+import click
 import requests
 
 PYPI_JSON_URL_TEMPLATE = "https://pypi.org/pypi/{package_name}/json"
@@ -75,10 +76,10 @@ if __name__ == "__main__":
     for name in names_to_test:
         taken, err = check_pypi_availability(name)
         if err:
-            print(f"Error checking '{name}': {err}")
+            click.echo(f"Error checking '{name}': {err}")
         elif taken is None:
-            print(f"Could not determine availability for '{name}'.")
+            click.echo(f"Could not determine availability for '{name}'.")
         elif taken:
-            print(f"'{name}' is likely TAKEN on PyPI.")
+            click.echo(f"'{name}' is likely TAKEN on PyPI.")
         else:
-            print(f"'{name}' is likely AVAILABLE on PyPI.")
+            click.echo(f"'{name}' is likely AVAILABLE on PyPI.")
