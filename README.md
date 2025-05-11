@@ -1,5 +1,9 @@
 # PyHatchery 🐍🥚
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Run Tests](https://github.com/ksylvan/pyhatchery/actions/workflows/tests.yml/badge.svg)](https://github.com/ksylvan/pyhatchery/actions/workflows/tests.yml)
+[![Build and Publish](https://github.com/ksylvan/pyhatchery/actions/workflows/publish.yml/badge.svg)](https://github.com/ksylvan/pyhatchery/actions/workflows/publish.yml)
+
 <div align="center">
 <img src="https://github.com/ksylvan/pyhatchery/blob/main/docs/hatchery_logo.jpg?raw=true" alt="cute snake hatching" width="267" height="200">
 </div>
