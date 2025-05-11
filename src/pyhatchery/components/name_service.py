@@ -29,13 +29,17 @@ def pep503_normalize(name: str) -> str:
     Returns:
         str: The PEP 503-compatible normalized slug.
     """
-    # Normalize the name to PEP 503 standards in a single regex operation.
-    # This regex performs the following steps:
-    # 1. Converts the string to lowercase.
-    # 2. Replaces any character not in [a-z0-9._-] with a hyphen.
-    # 3. Collapses consecutive invalid chars (including converted hyphens) into "-".
-    # 4. Strips leading and trailing hyphens.
-    name = re.sub(r"[^a-z0-9._-]+|[-_.]+(?=[^-_.])|^-+|-+$", "-", name.lower())
+    # Step 1: Convert the string to lowercase
+    name = name.lower()
+
+    # Step 2: Replace any character not in [a-z0-9._-] with a hyphen
+    name = re.sub(r"[^a-z0-9._-]+", "-", name)
+
+    # Step 3: Collapse consecutive invalid characters (., _, -) into a single hyphen
+    name = re.sub(r"[-_.]+", "-", name)
+
+    # Step 4: Strip leading and trailing hyphens
+    name = name.strip("-")
     return name
 
 
