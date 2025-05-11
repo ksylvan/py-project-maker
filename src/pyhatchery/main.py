@@ -7,11 +7,8 @@ from pyhatchery import __version__
 
 def main():
     """Main function to execute the script."""
-    click.echo(
-        f"Hello from pyhatchery! Version {
-            click.style(__version__, fg='green', bold=True)
-        }.",
-    )
+    styled_version = click.style(__version__, fg="green", bold=True)
+    click.echo(f"Hello from pyhatchery! Version {styled_version}.")
 
 
 if __name__ == "__main__":
