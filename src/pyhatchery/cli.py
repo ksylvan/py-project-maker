@@ -1,6 +1,7 @@
 """Command-line interface for PyHatchery."""
 
 import argparse
+import os
 import sys
 
 import click
