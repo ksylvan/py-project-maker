@@ -6,7 +6,7 @@ import sys
 
 import click
 
-from .__about__ import __version__
+from . import __version__
 from .components.http_client import check_pypi_availability
 from .components.interactive_wizard import collect_project_details
 from .components.name_service import (
@@ -16,6 +16,7 @@ from .components.name_service import (
     pep503_name_ok,  # Keep this for the initial project name check
     pep503_normalize,
 )
+from .utils.config import str_to_bool
 
 
 def _perform_project_name_checks(
@@ -95,7 +96,7 @@ def main(argv: list[str] | None = None) -> int:
     new_parser.add_argument("project_name", help="The name of the project to create.")
 
     args = parser.parse_args(argv if argv is not None else sys.argv[1:])
-    debug_flag = os.environ.get("PYHATCHERY_DEBUG", args.debug)
+    debug_flag = str_to_bool(os.environ.get("PYHATCHERY_DEBUG", None)) or args.debug
 
     if args.command == "new":
         if not args.project_name:  # Basic check, more robust validation later
