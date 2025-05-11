@@ -35,18 +35,6 @@
 			}
 		},
 		{
-			"label": "Run Linters",
-			"type": "shell",
-			"command": "cd ${workspaceFolder} && uv run ruff check . && uv run pylint .",
-			"group": {
-				"kind": "test",
-				"isDefault": true
-			},
-			"presentation": {
-				"reveal": "always"
-			}
-		},
-		{
 			"label": "Run Pyright",
 			"type": "shell",
 			"command": "cd ${workspaceFolder} && uv run pyright .",
