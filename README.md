@@ -2,13 +2,9 @@
 
 [![License: MIT][mit_license]][mit_license_link]
 
-<div align="center">
-
 | main  |   |  | develop  |   |
 |:---:|:---:|:---:|:---:|:---:|
 | [![Main Tests][main_tests]][main_tests_link] | [![Main Publish][main_publish]][main_publish_link] |  | [![Develop Tests][develop_tests]][develop_tests_link] | [![Develop Publish][develop_publish]][develop_publish_link] |
-
-</div>
 
 <div align="center">
 <img src="https://github.com/ksylvan/pyhatchery/blob/main/docs/hatchery_logo.jpg?raw=true" alt="cute snake hatching" width="267" height="200">
