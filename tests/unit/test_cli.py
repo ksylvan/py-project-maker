@@ -1,6 +1,7 @@
 """Unit tests for the PyHatchery CLI."""
 
 import io
+import os
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -74,10 +75,12 @@ class TestCli(unittest.TestCase):
         self.mock_check_pypi.return_value = (False, None)
         self.mock_is_valid_python_name.return_value = (True, None)
         self.mock_collect_details.return_value = {"author_name": "Test Author"}
+        os.environ["PYHATCHERY_DEBUG"] = "1"  # Set environment variable for testing
 
     def tearDown(self):
         """Clean up patches."""
         patch.stopall()
+        os.environ.pop("PYHATCHERY_DEBUG", None)  # Clean up environment variable
 
     def test_new_project_success_no_warnings(self):
         """Test `pyhatchery new project_name` succeeds with no warnings."""
