@@ -148,9 +148,7 @@ class TestCli:
         mock_pep503_ok: MagicMock,
     ):
         """Test warning for initial project name format, but still proceeds."""
-        invalid_name = (
-            "Invalid_Project_Name_Caps"  # Example that might fail pep503_name_ok
-        )
+        invalid_name = "Invalid_Project_Name_Caps"
         stdout, stderr, exit_code, _ = run_cli_capture_output(["new", invalid_name])
 
         # Should show normalized name, which comes from the mock
