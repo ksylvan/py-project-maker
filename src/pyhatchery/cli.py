@@ -9,6 +9,7 @@ from .__about__ import __version__
 from .components.http_client import check_pypi_availability
 from .components.name_service import (
     derive_python_package_slug,
+    has_invalid_characters,
     is_valid_python_package_name,
     pep503_name_ok,  # Keep this for the initial project name check
     pep503_normalize,
@@ -92,33 +93,38 @@ def main(argv: list[str] | None = None) -> int:
             new_parser.print_help(sys.stderr)
             return 1
 
-        project_name = args.project_name
+        original_name = args.project_name
 
-        # Derive slugs
-        pypi_slug = pep503_normalize(project_name)
-        if project_name != pypi_slug:
-            click.secho(
-                f"Warning: Project name '{project_name}' normalized to '{pypi_slug}'.",
-                fg="yellow",
-                err=True,
-            )
-            project_name = pypi_slug
+        # First check for invalid characters that should cause immediate rejection
+        has_invalid, invalid_error = has_invalid_characters(original_name)
+        if has_invalid:
+            click.secho(f"Error: {invalid_error}", fg="red", err=True)
+            return 1
 
-        python_slug = derive_python_package_slug(project_name)
+        # Now derive slugs
+        pypi_slug = pep503_normalize(original_name)
 
-        # Validate the project name itself
-        is_name_ok, name_error_message = pep503_name_ok(project_name)
+        # Check original name format for PEP503 compliance (for warnings)
+        is_name_ok, name_error_message = pep503_name_ok(original_name)
         if not is_name_ok:
-            # Special characters like "!" are handled as a hard error
-            if "!" in project_name:
-                click.secho(name_error_message, fg="red", err=True)
-                return 1
             # Other validation failures are just warnings
             click.secho(
-                f"Warning: Project name '{project_name}': {name_error_message}",
+                f"Warning: Project name '{original_name}': {name_error_message}",
                 fg="yellow",
                 err=True,
             )
+
+        # Warn about normalization if needed
+        if original_name != pypi_slug:
+            click.secho(
+                f"Warning: Project name '{original_name}' normalized to '{pypi_slug}'.",
+                fg="yellow",
+                err=True,
+            )
+
+        # Use normalized name for internal operations
+        project_name = pypi_slug
+        python_slug = derive_python_package_slug(project_name)
 
         # Print derived slugs for debugging/info (optional, can be removed later)
         click.secho(f"Derived PyPI slug: {pypi_slug}", fg="blue", err=True)
@@ -127,7 +133,7 @@ def main(argv: list[str] | None = None) -> int:
         # Perform additional name checks and print warnings (non-blocking)
         _perform_project_name_checks(project_name, pypi_slug, python_slug)
 
-        click.secho(f"Creating new project: {project_name}", fg="green")  # Placeholder
+        click.secho(f"Creating new project: {project_name}", fg="green")
         # Actual project creation logic will go here later.
         return 0
 

@@ -43,11 +43,15 @@ class TestCliIntegration:
     """Integration tests for the PyHatchery CLI."""
 
     def test_new_project_success(self):
-        """Test that 'pyhatchery new my_project' works correctly."""
-        stdout, stderr = run_cli_command(["new", "my_test_project"])
+        """Test that 'pyhatchery new my_project' works correctly
+        and creates a normalized project name."""
+        project_name = "my_test_project"
+        normalized_name = "my-test-project"  # This is what we expect
+        stdout, stderr = run_cli_command(["new", project_name])
 
-        assert "Creating new project: my_test_project" in stdout
-        assert stderr.startswith("Derived PyPI slug:")
+        assert f"Creating new project: {normalized_name}" in stdout
+        assert "Derived PyPI slug:" in stderr
+        assert "Derived Python package slug:" in stderr
 
     def test_missing_project_name(self):
         """Test that 'pyhatchery new' without a name shows an error."""
@@ -57,13 +61,12 @@ class TestCliIntegration:
         assert "error: the following arguments are required: project_name" in stderr
 
     def test_invalid_project_name(self):
-        """Test that 'pyhatchery new' with an invalid name shows an error."""
+        """Test that 'pyhatchery new' with an invalid name shows an error and exits."""
         stdout, stderr = run_cli_command(["new", "invalid!name"], expected_returncode=1)
 
-        assert stdout == ""
-        assert (
-            "Error: Project name 'invalid!name' violates PEP 503 conventions." in stderr
-        )
+        assert stdout == ""  # Error message should go to stderr
+        assert "Error: Project name contains invalid characters" in stderr
+        assert "'!'" in stderr
 
     def test_version_flag(self):
         """Test that 'pyhatchery --version' shows the version."""

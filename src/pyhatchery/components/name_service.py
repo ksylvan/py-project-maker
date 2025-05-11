@@ -149,3 +149,32 @@ def pep503_name_ok(project_name: str) -> tuple[bool, str | None]:
     ) > 2:  # keep names terse/readable
         return False, "Project name contains too many underscores or dashes."
     return True, None
+
+
+def has_invalid_characters(name: str) -> tuple[bool, str | None]:
+    """
+    Check if the project name contains characters that are not allowed.
+    This is a stricter check than PEP503 normalization, which simply
+    replaces invalid chars.
+
+    Some characters like '!' should be rejected outright rather than
+    silently normalized.
+
+    Args:
+        name: The project name to check for invalid characters
+
+    Returns:
+        tuple[bool, str | None]: (has_invalid, error_message)
+            - has_invalid: True if the name contains invalid characters
+            - error_message: The invalid characters found, or None if valid
+    """
+    # List of characters that should cause immediate rejection
+    invalid_chars = "!@#$%^&*+=}{[]|\\/:;\"'<>"
+
+    found_invalid = [char for char in invalid_chars if char in name]
+
+    if found_invalid:
+        chars_str = ", ".join([f"'{c}'" for c in found_invalid])
+        return True, f"Project name contains invalid characters: {chars_str}"
+
+    return False, None

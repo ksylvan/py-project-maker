@@ -44,6 +44,8 @@
 		"shutil",
 		"slugification",
 		"slugified",
+		"someproject",
+		"someprojectwithcaps",
 		"testpaths",
 		"testpypi",
 		"TPLS",
