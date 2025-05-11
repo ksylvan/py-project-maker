@@ -74,9 +74,15 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--version",
+        "-v",
         action="version",
         version=f"pyhatchery {__version__}",
         help="Show the version and exit.",
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debug mode.",
     )
     # Subparsers for commands like "new"
     subparsers = parser.add_subparsers(
@@ -88,6 +94,7 @@ def main(argv: list[str] | None = None) -> int:
     new_parser.add_argument("project_name", help="The name of the project to create.")
 
     args = parser.parse_args(argv if argv is not None else sys.argv[1:])
+    debug_flag = os.environ.get("PYHATCHERY_DEBUG", args.debug)
 
     if args.command == "new":
         if not args.project_name:  # Basic check, more robust validation later
@@ -151,7 +158,9 @@ def main(argv: list[str] | None = None) -> int:
             return 1  # Or a specific exit code for user cancellation
 
         click.secho(f"Creating new project: {project_name}", fg="green")
-        click.secho(f"With details: {project_details}", fg="blue")  # For debugging
+        if debug_flag:
+            click.secho(f"With details: {project_details}", fg="blue")
+
         # Actual project creation logic will go here later.
         return 0
 
