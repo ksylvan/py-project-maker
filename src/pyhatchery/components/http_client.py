@@ -76,10 +76,10 @@ if __name__ == "__main__":
     for name in names_to_test:
         taken, err = check_pypi_availability(name)
         if err:
-            click.echo(f"Error checking '{name}': {err}")
+            click.secho(f"Error checking '{name}': {err}", fg='red')
         elif taken is None:
-            click.echo(f"Could not determine availability for '{name}'.")
+            click.secho(f"Could not determine availability for '{name}'.", fg='yellow')
         elif taken:
-            click.echo(f"'{name}' is likely TAKEN on PyPI.")
+            click.secho(f"'{name}' is likely TAKEN on PyPI.", fg='bright_red')
         else:
-            click.echo(f"'{name}' is likely AVAILABLE on PyPI.")
+            click.secho(f"'{name}' is likely AVAILABLE on PyPI.", fg='green')
