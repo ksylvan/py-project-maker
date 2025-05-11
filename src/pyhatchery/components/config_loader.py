@@ -6,6 +6,8 @@ import subprocess
 from pathlib import Path
 from typing import Dict, Optional
 
+from dotenv import dotenv_values
+
 
 def get_git_config_value(key: str) -> Optional[str]:
     """
@@ -58,7 +60,6 @@ def load_from_env(env_file_path: str = ".env") -> Dict[str, str]:
         # from the .env file without modifying os.environ
         # For this to work, we need to ensure python-dotenv is installed.
         # The PRD specifies python-dotenv as a runtime dependency.
-        from dotenv import dotenv_values  # pylint: disable=import-outside-toplevel
 
         loaded_vars = dotenv_values(dotenv_path=env_path)
         # Filter out None values to match the Dict[str, str] signature
