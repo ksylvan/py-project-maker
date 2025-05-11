@@ -79,7 +79,7 @@ class TestCli:
         project_name = "my_new_project"
         stdout, stderr, exit_code, _ = run_cli_capture_output(["new", project_name])
 
-        expected_stdout = f"Proceeding to create project: {project_name}\n"
+        expected_stdout = f"Creating new project: {project_name}\n"
         # Stderr will contain the debug prints for slugs
         expected_stderr_part_pypi = "Derived PyPI slug: mocked-pypi-slug"
         expected_stderr_part_python = "Derived Python package slug: mocked_python_slug"
@@ -164,7 +164,7 @@ class TestCli:
         )
         stdout, stderr, exit_code, _ = run_cli_capture_output(["new", invalid_name])
 
-        assert f"Proceeding to create project: {invalid_name}" in stdout
+        assert f"Creating new project: {invalid_name}" in stdout
         assert (
             f"Warning: Project name '{invalid_name}': Initial name format error."
             in stderr
@@ -196,7 +196,7 @@ class TestCli:
         project_name = "someproject"
         stdout, stderr, exit_code, _ = run_cli_capture_output(["new", project_name])
 
-        assert f"Proceeding to create project: {project_name}" in stdout
+        assert f"Creating new project: {project_name}" in stdout
         assert (
             "Warning: The name 'taken-pypi-name' might already be taken on PyPI."
             in stderr
@@ -228,7 +228,7 @@ class TestCli:
         project_name = "someproject"
         stdout, stderr, exit_code, _ = run_cli_capture_output(["new", project_name])
 
-        assert f"Proceeding to create project: {project_name}" in stdout
+        assert f"Creating new project: {project_name}" in stdout
         expected_warning = (
             "Warning: PyPI availability check for 'pypi-name' failed: "
             "Network error during PyPI check"
@@ -261,7 +261,7 @@ class TestCli:
         project_name = "SomeProjectWithCaps"
         stdout, stderr, exit_code, _ = run_cli_capture_output(["new", project_name])
 
-        assert f"Proceeding to create project: {project_name}" in stdout
+        assert f"Creating new project: {project_name}" in stdout
         expected_warning = (
             "Warning: Derived Python package name 'Invalid_Python_Slug' "
             "(from input 'SomeProjectWithCaps') is not PEP 8 compliant: "
@@ -295,7 +295,7 @@ class TestCli:
         project_name = "ProblematicName"
         stdout, stderr, exit_code, _ = run_cli_capture_output(["new", project_name])
 
-        assert f"Proceeding to create project: {project_name}" in stdout
+        assert f"Creating new project: {project_name}" in stdout
         assert (
             f"Warning: Project name '{project_name}': Initial name problem." in stderr
         )

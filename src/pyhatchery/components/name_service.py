@@ -1,5 +1,6 @@
 """Project name validation functions."""
 
+import keyword
 import re
 
 _PEP503_VALID_RE = re.compile(
@@ -22,6 +23,10 @@ def pep503_normalize(name: str) -> str:
         str: The PEP503 normalized name.
 
     """
+    # Strip leading/trailing whitespace and replace internal spaces with hyphens
+    name = name.strip()
+    name = re.sub(r"\s+", "-", name)
+    # Replace runs of separators with a single hyphen
     return re.sub(r"[-_.]+", "-", name).lower()
 
 
@@ -49,15 +54,20 @@ def derive_python_package_slug(name: str) -> str:
     # Ensure it's a valid Python identifier
     if not slug:  # Handle empty string case
         return "default_package_name"
+
+    # Check if it's a Python keyword
+
+    if keyword.iskeyword(slug):
+        return "default_package_name"
+
     if not slug.isidentifier():
-        # If it's not a valid identifier (e.g., starts with a digit, or is a keyword)
-        # A simple approach: prefix. More complex handling might be needed for keywords.
+        # If it's not a valid identifier (e.g., starts with a digit)
         if slug[0].isdigit():
             slug = f"p_{slug}"
-        # If still not an identifier (e.g. was a keyword like 'pass'), provide a default
-        if not slug.isidentifier():  # Check again after potential prefix
-            # Or raise an error / use a more robust transformation
+        # If still not an identifier, provide a default
+        if not slug.isidentifier():
             return "default_package_name"
+
     return slug
 
 

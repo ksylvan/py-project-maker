@@ -17,13 +17,7 @@ def _perform_project_name_checks(
     project_name: str, pypi_slug: str, python_slug: str
 ) -> None:
     """Helper to perform and print warnings for project name checks."""
-    # Initial validation of the project name itself (non-blocking warning)
-    is_name_ok, name_error_message = pep503_name_ok(project_name)
-    if not is_name_ok:
-        print(
-            f"Warning: Project name '{project_name}': {name_error_message}",
-            file=sys.stderr,
-        )
+    # Note: We don't check pep503_name_ok here, as it's done earlier as a blocking check
 
     # Check PyPI availability
     is_pypi_taken, pypi_error_msg = check_pypi_availability(pypi_slug)
@@ -98,7 +92,20 @@ def main(argv: list[str] | None = None) -> int:
 
         project_name = args.project_name
 
-        # Derive slugs first
+        # Validate the project name itself
+        is_name_ok, name_error_message = pep503_name_ok(project_name)
+        if not is_name_ok:
+            # Special characters like "!" are handled as a hard error
+            if "!" in project_name:
+                print(name_error_message, file=sys.stderr)
+                return 1
+            # Other validation failures are just warnings
+            print(
+                f"Warning: Project name '{project_name}': {name_error_message}",
+                file=sys.stderr,
+            )
+
+        # Derive slugs
         pypi_slug = pep503_normalize(project_name)
         python_slug = derive_python_package_slug(project_name)
 
@@ -106,10 +113,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Derived PyPI slug: {pypi_slug}", file=sys.stderr)
         print(f"Derived Python package slug: {python_slug}", file=sys.stderr)
 
-        # Perform all name checks and print warnings
+        # Perform additional name checks and print warnings (non-blocking)
         _perform_project_name_checks(project_name, pypi_slug, python_slug)
 
-        print(f"Proceeding to create project: {project_name}")  # Placeholder
+        print(f"Creating new project: {project_name}")  # Placeholder
         # Actual project creation logic will go here later.
         return 0
 

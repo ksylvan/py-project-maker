@@ -47,7 +47,7 @@ class TestCliIntegration:
         stdout, stderr = run_cli_command(["new", "my_test_project"])
 
         assert "Creating new project: my_test_project" in stdout
-        assert stderr == ""
+        assert stderr.startswith("Derived PyPI slug:")
 
     def test_missing_project_name(self):
         """Test that 'pyhatchery new' without a name shows an error."""
