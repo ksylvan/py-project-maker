@@ -144,6 +144,8 @@ def pep503_name_ok(project_name: str) -> tuple[bool, str | None]:
             False,
             f"Project name '{project_name}' is too long (max {_MAX_LEN} chars).",
         )
-    if project_name.count("_") > 2:  # keep names terse/readable
-        return False, "Project name cannot contain too many underscores."
+    if (
+        project_name.count("_") + project_name.count("-")
+    ) > 2:  # keep names terse/readable
+        return False, "Project name contains too many underscores or dashes."
     return True, None
