@@ -82,6 +82,7 @@ class TestPromptForChoice:
             call.secho(" (default)", fg="green"),
             call.secho("  3. Gamma"),
         ]
+        mock_click.assert_has_calls(expected_calls, any_order=True)
         # Updated to check mock_click.method_calls directly
         actual_calls = mock_click.method_calls
         assert actual_calls == expected_calls
