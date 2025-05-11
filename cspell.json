@@ -39,6 +39,7 @@
 		"Pythonic",
 		"pytype",
 		"sdist",
+		"secho",
 		"shutil",
 		"slugification",
 		"slugified",
