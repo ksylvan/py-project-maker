@@ -12,7 +12,7 @@ class TestHttpClient(unittest.TestCase):
     """Tests for the HTTP client component."""
 
     @patch("pyhatchery.components.http_client.requests.get")
-    def test_pypi_name_taken(self, mock_get):
+    def test_pypi_name_taken(self, mock_get: MagicMock):
         """Test that a 200 OK response indicates a package name is taken."""
         # Setup
         mock_response = MagicMock()
@@ -30,7 +30,7 @@ class TestHttpClient(unittest.TestCase):
         )
 
     @patch("pyhatchery.components.http_client.requests.get")
-    def test_pypi_name_available(self, mock_get):
+    def test_pypi_name_available(self, mock_get: MagicMock):
         """Test that a 404 Not Found response indicates a package name is available."""
         # Setup
         mock_response = MagicMock()
@@ -48,7 +48,7 @@ class TestHttpClient(unittest.TestCase):
         )
 
     @patch("pyhatchery.components.http_client.requests.get")
-    def test_pypi_api_error(self, mock_get):
+    def test_pypi_api_error(self, mock_get: MagicMock):
         """Test handling of an unexpected status code from PyPI API."""
         # Setup
         mock_response = MagicMock()
@@ -62,14 +62,14 @@ class TestHttpClient(unittest.TestCase):
         # Assert
         self.assertIsNone(is_taken)
         self.assertIsNotNone(error_msg)
-        self.assertIn("Unexpected status code: 500", error_msg)
-        self.assertIn("Internal server error", error_msg)
+        self.assertIn("Unexpected status code: 500", str(error_msg))
+        self.assertIn("Internal server error", str(error_msg))
         mock_get.assert_called_once_with(
             "https://pypi.org/pypi/package-name/json", timeout=10
         )
 
     @patch("pyhatchery.components.http_client.requests.get")
-    def test_network_timeout(self, mock_get):
+    def test_network_timeout(self, mock_get: MagicMock):
         """Test handling of a network timeout."""
         # Setup
         mock_get.side_effect = requests.exceptions.Timeout("Connection timed out")
@@ -80,13 +80,13 @@ class TestHttpClient(unittest.TestCase):
         # Assert
         self.assertIsNone(is_taken)
         self.assertIsNotNone(error_msg)
-        self.assertIn("timed out", error_msg)
+        self.assertIn("timed out", str(error_msg))
         mock_get.assert_called_once_with(
             "https://pypi.org/pypi/package-name/json", timeout=10
         )
 
     @patch("pyhatchery.components.http_client.requests.get")
-    def test_connection_error(self, mock_get):
+    def test_connection_error(self, mock_get: MagicMock):
         """Test handling of a connection error."""
         # Setup
         mock_get.side_effect = requests.exceptions.ConnectionError(
@@ -99,13 +99,13 @@ class TestHttpClient(unittest.TestCase):
         # Assert
         self.assertIsNone(is_taken)
         self.assertIsNotNone(error_msg)
-        self.assertIn("connection error", error_msg)
+        self.assertIn("connection error", str(error_msg))
         mock_get.assert_called_once_with(
             "https://pypi.org/pypi/package-name/json", timeout=10
         )
 
     @patch("pyhatchery.components.http_client.requests.get")
-    def test_general_request_exception(self, mock_get):
+    def test_general_request_exception(self, mock_get: MagicMock):
         """Test handling of a general request exception."""
         # Setup
         mock_get.side_effect = requests.exceptions.RequestException(
@@ -118,8 +118,8 @@ class TestHttpClient(unittest.TestCase):
         # Assert
         self.assertIsNone(is_taken)
         self.assertIsNotNone(error_msg)
-        self.assertIn("unexpected error", error_msg)
-        self.assertIn("Some other request error", error_msg)
+        self.assertIn("unexpected error", str(error_msg))
+        self.assertIn("Some other request error", str(error_msg))
         mock_get.assert_called_once_with(
             "https://pypi.org/pypi/package-name/json", timeout=10
         )
