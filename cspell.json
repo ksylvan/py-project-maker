@@ -17,6 +17,7 @@
 		"conftest",
 		"direnv",
 		"docstrings",
+		"dotenv",
 		"htmlcov",
 		"HTTPC",
 		"ipynb",

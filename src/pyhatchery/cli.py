@@ -7,6 +7,7 @@ import click
 
 from .__about__ import __version__
 from .components.http_client import check_pypi_availability
+from .components.interactive_wizard import collect_project_details
 from .components.name_service import (
     derive_python_package_slug,
     has_invalid_characters,
@@ -18,25 +19,28 @@ from .components.name_service import (
 
 def _perform_project_name_checks(
     project_name: str, pypi_slug: str, python_slug: str
-) -> None:
-    """Helper to perform and print warnings for project name checks."""
+) -> list[str]:
+    """
+    Helper to perform and print warnings for project name checks.
+    Returns a list of warning messages.
+    """
+    warnings: list[str] = []
     # Note: We don't check pep503_name_ok here, as it's done earlier as a blocking check
 
     # Check PyPI availability
     is_pypi_taken, pypi_error_msg = check_pypi_availability(pypi_slug)
     if pypi_error_msg:
-        msg = (
-            f"Warning: PyPI availability check for '{pypi_slug}' failed: "
-            f"{pypi_error_msg}"
-        )
-        click.secho(msg, fg="yellow", err=True)
+        msg = f"PyPI availability check for '{pypi_slug}' failed: {pypi_error_msg}"
+        click.secho(f"Warning: {msg}", fg="yellow", err=True)
+        warnings.append(msg)
     elif is_pypi_taken:
         msg = (
-            f"Warning: The name '{pypi_slug}' might already be taken on PyPI. "
+            f"The name '{pypi_slug}' might already be taken on PyPI. "
             "You may want to choose a different name if you plan to publish "
             "this package publicly."
         )
-        click.secho(msg, fg="yellow", err=True)
+        click.secho(f"Warning: {msg}", fg="yellow", err=True)
+        warnings.append(msg)
 
     # Check Python package slug PEP 8 compliance
     is_python_slug_valid, python_slug_error_msg = is_valid_python_package_name(
@@ -44,11 +48,13 @@ def _perform_project_name_checks(
     )
     if not is_python_slug_valid:
         warning_msg = (
-            f"Warning: Derived Python package name '{python_slug}' "
+            f"Derived Python package name '{python_slug}' "
             f"(from input '{project_name}') is not PEP 8 compliant: "
             f"{python_slug_error_msg}"
         )
-        click.secho(warning_msg, fg="yellow", err=True)
+        click.secho(f"Warning: {warning_msg}", fg="yellow", err=True)
+        warnings.append(warning_msg)
+    return warnings
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -131,9 +137,21 @@ def main(argv: list[str] | None = None) -> int:
         click.secho(f"Derived Python package slug: {python_slug}", fg="blue", err=True)
 
         # Perform additional name checks and print warnings (non-blocking)
-        _perform_project_name_checks(project_name, pypi_slug, python_slug)
+        name_warnings = _perform_project_name_checks(
+            project_name, pypi_slug, python_slug
+        )
+
+        # TODO: Add --no-interactive flag check here later (Story 1.3)
+        # For now, always assume interactive mode if 'new' command is used.
+
+        project_details = collect_project_details(project_name, name_warnings)
+
+        if project_details is None:
+            # User chose not to proceed after warnings in the wizard
+            return 1  # Or a specific exit code for user cancellation
 
         click.secho(f"Creating new project: {project_name}", fg="green")
+        click.secho(f"With details: {project_details}", fg="blue")  # For debugging
         # Actual project creation logic will go here later.
         return 0
 
