@@ -277,7 +277,7 @@ class TestCli(unittest.TestCase):
 
         # Assert stdout/stderr
         self.assertIn(f"Creating new project: {normalized_name_mock}", stdout)
-        self.assertIn(f"With details: {'author_name': 'Test Author'}", stdout)
+        self.assertIn("With details: {'author_name': 'Test Author'}", stdout)
         self.assertIn(
             f"Warning: Project name '{project_name}': Initial name problem.", stderr
         )
