@@ -20,7 +20,7 @@ def prompt_for_value(
     prompt_message: str, default_value: Optional[str] = None, max_retries: int = 3
 ) -> str | None:
     """Helper function to prompt user for input with a default."""
-    if default_value:
+    if default_value is not None:
         prompt_with_default = f"{prompt_message} (default: {default_value}): "
         user_input = input(prompt_with_default).strip()
         if user_input:
