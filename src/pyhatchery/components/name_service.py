@@ -11,23 +11,34 @@ _MAX_LEN = 32  # “short”: pragmatic cap
 
 
 def pep503_normalize(name: str) -> str:
-    """Return the canonical PEP-503 form: lower-case, runs of . _ - become '-'.
-    See https://peps.python.org/pep-0503 for more details.
+    """Return a PEP 503-compatible normalized slug from the input name.
+    Normalization involves:
+    1. Converting to lowercase.
+    2. Replacing any character not in [a-z0-9._-] with a hyphen.
+    3. Replacing all runs of the characters ., _, or - with a single hyphen.
+    4. Stripping leading/trailing hyphens.
 
-    The name is normalized to lowercase, and runs of periods, underscores, and hyphens
-    are replaced with a single hyphen, which are then normalized to lowercase
+    This ensures the resulting slug is suitable for use in contexts
+    expecting PEP 503 normalized names, even if the input contained
+    characters outside the typical set.
+
+    See https://peps.python.org/pep-0503 for the base normalization rules.
 
     Args:
-        name (str): The name to canonicalize.
+        name (str): The name to normalize and slugify.
     Returns:
-        str: The PEP503 normalized name.
-
+        str: The PEP 503-compatible normalized slug.
     """
-    # Strip leading/trailing whitespace and replace internal spaces with hyphens
-    name = name.strip()
-    name = re.sub(r"\s+", "-", name)
-    # Replace runs of separators with a single hyphen
-    return re.sub(r"[-_.]+", "-", name).lower()
+    name = name.lower()
+    # Replace any character that is NOT a lowercase letter, a digit,
+    # or one of '.', '_', '-' with a hyphen. This also handles whitespace.
+    name = re.sub(r"[^a-z0-9._-]+", "-", name)
+    # Replace runs of '.', '_', '-' (which now includes characters converted
+    # in the previous step) with a single hyphen.
+    name = re.sub(r"[-_.]+", "-", name)
+    # Remove leading/trailing hyphens that might have been introduced.
+    name = name.strip("-")
+    return name
 
 
 def derive_python_package_slug(name: str) -> str:
@@ -126,13 +137,13 @@ def pep503_name_ok(project_name: str) -> tuple[bool, str | None]:
     if not _PEP503_VALID_RE.match(project_name):
         return (
             False,
-            f"Error: Project name '{project_name}' violates PEP 503 conventions.",
+            f"Project name '{project_name}' violates PEP 503 conventions.",
         )
     if len(project_name) > _MAX_LEN:
         return (
             False,
-            f"Error: Project name '{project_name}' is too long (max {_MAX_LEN} chars).",
+            f"Project name '{project_name}' is too long (max {_MAX_LEN} chars).",
         )
     if project_name.count("_") > 2:  # keep names terse/readable
-        return False, "Error: Project name cannot contain too many underscores."
+        return False, "Project name cannot contain too many underscores."
     return True, None

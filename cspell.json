@@ -24,6 +24,7 @@
 		"ksylvan",
 		"mypy",
 		"pathlib",
+		"pexpect",
 		"pushable",
 		"pycache",
 		"pyenv",

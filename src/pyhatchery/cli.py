@@ -28,14 +28,14 @@ def _perform_project_name_checks(
             f"Warning: PyPI availability check for '{pypi_slug}' failed: "
             f"{pypi_error_msg}"
         )
-        click.secho(msg, fg='yellow', err=True)
+        click.secho(msg, fg="yellow", err=True)
     elif is_pypi_taken:
         msg = (
             f"Warning: The name '{pypi_slug}' might already be taken on PyPI. "
             "You may want to choose a different name if you plan to publish "
             "this package publicly."
         )
-        click.secho(msg, fg='yellow', err=True)
+        click.secho(msg, fg="yellow", err=True)
 
     # Check Python package slug PEP 8 compliance
     is_python_slug_valid, python_slug_error_msg = is_valid_python_package_name(
@@ -47,7 +47,7 @@ def _perform_project_name_checks(
             f"(from input '{project_name}') is not PEP 8 compliant: "
             f"{python_slug_error_msg}"
         )
-        click.secho(warning_msg, fg='yellow', err=True)
+        click.secho(warning_msg, fg="yellow", err=True)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -88,38 +88,46 @@ def main(argv: list[str] | None = None) -> int:
             # but this is a fallback.
             # For a missing positional argument, argparse will exit before this.
             # This explicit check is more for an empty string if argparse allows it.
-            click.secho("Error: Project name cannot be empty.", fg='red', err=True)
+            click.secho("Error: Project name cannot be empty.", fg="red", err=True)
             new_parser.print_help(sys.stderr)
             return 1
 
         project_name = args.project_name
+
+        # Derive slugs
+        pypi_slug = pep503_normalize(project_name)
+        if project_name != pypi_slug:
+            click.secho(
+                f"Warning: Project name '{project_name}' normalized to '{pypi_slug}'.",
+                fg="yellow",
+                err=True,
+            )
+            project_name = pypi_slug
+
+        python_slug = derive_python_package_slug(project_name)
 
         # Validate the project name itself
         is_name_ok, name_error_message = pep503_name_ok(project_name)
         if not is_name_ok:
             # Special characters like "!" are handled as a hard error
             if "!" in project_name:
-                click.secho(name_error_message, fg='red', err=True)
+                click.secho(name_error_message, fg="red", err=True)
                 return 1
             # Other validation failures are just warnings
             click.secho(
                 f"Warning: Project name '{project_name}': {name_error_message}",
-                fg='yellow',
-                err=True
+                fg="yellow",
+                err=True,
             )
 
-        # Derive slugs
-        pypi_slug = pep503_normalize(project_name)
-        python_slug = derive_python_package_slug(project_name)
-
         # Print derived slugs for debugging/info (optional, can be removed later)
-        click.secho(f"Derived PyPI slug: {pypi_slug}", fg='blue', err=True)
-        click.secho(f"Derived Python package slug: {python_slug}", fg='blue', err=True)
+        click.secho(f"Derived PyPI slug: {pypi_slug}", fg="blue", err=True)
+        click.secho(f"Derived Python package slug: {python_slug}", fg="blue", err=True)
 
         # Perform additional name checks and print warnings (non-blocking)
         _perform_project_name_checks(project_name, pypi_slug, python_slug)
 
-        click.secho(f"Creating new project: {project_name}", fg='green')  # Placeholder
+        click.secho(f"Creating new project: {project_name}", fg="green")  # Placeholder
         # Actual project creation logic will go here later.
         return 0
 
