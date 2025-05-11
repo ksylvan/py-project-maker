@@ -24,8 +24,29 @@
 | **Frontend Platform** | N/A                                         |                          | PyHatchery is a CLI tool and does not have a frontend UI.                           |                                                                |
 | **Backend Platform** | N/A                                         |                          | PyHatchery is a self-contained CLI application.                                     |                                                                |
 
+## Agile Methodology
+
+1. The tasks are stored in `ai/stories/`
+2. Each file there contains a task list that addresses that story.
+3. A task is NOT COMPLETE till ALL tests and linters pass. From the top directory of the repo, run:
+
+   ```bash
+   uv run pytest -v
+   uv run ruff check . && uv run pylint .
+   ```
+
+   Also, we enforce strict type-checking, so please install pyright as described in the [contributing](./contributing.md) document, and run it like this:
+
+   ```bash
+   uv run pyright
+   ```
+
+4. As each task is completed, keep the checklists updated.
+
 ## Change Log
 
 | Change        | Date       | Version | Description                                     | Author      |
 | ------------- | ---------- | ------- | ----------------------------------------------- | ----------- |
 | Initial draft | 2025-05-09 | 0.1     | Initial draft based on PRD and Project Brief. | 3-Architect |
+| Agile documented | 2025-05-10 | 0.2     | Added note about AI-Agile tasks folder. | Kayvan |
+| pyright added | 2025-05-10 | 0.3    | Pyright and strict typing | Kayvan |

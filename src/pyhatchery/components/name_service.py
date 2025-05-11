@@ -1,5 +1,6 @@
 """Project name validation functions."""
 
+import keyword
 import re
 
 _PEP503_VALID_RE = re.compile(
@@ -22,7 +23,87 @@ def pep503_normalize(name: str) -> str:
         str: The PEP503 normalized name.
 
     """
+    # Strip leading/trailing whitespace and replace internal spaces with hyphens
+    name = name.strip()
+    name = re.sub(r"\s+", "-", name)
+    # Replace runs of separators with a single hyphen
     return re.sub(r"[-_.]+", "-", name).lower()
+
+
+def derive_python_package_slug(name: str) -> str:
+    """
+    Derives a Python package slug from a project name.
+    Converts to lowercase, replaces separators with underscores,
+    and ensures it's a valid Python identifier.
+
+    Args:
+        name: The project name.
+
+    Returns:
+        A string suitable for use as a Python package name.
+    """
+    # Replace non-alphanumeric characters (except underscores) with underscores
+    slug = re.sub(r"[^a-zA-Z0-9_]", "_", name)
+    # Convert to lowercase
+    slug = slug.lower()
+    # Consolidate multiple underscores
+    slug = re.sub(r"_+", "_", slug)
+    # Remove leading/trailing underscores
+    slug = slug.strip("_")
+
+    # Ensure it's a valid Python identifier
+    if not slug:  # Handle empty string case
+        return "default_package_name"
+
+    # Check if it's a Python keyword
+
+    if keyword.iskeyword(slug):
+        return "default_package_name"
+
+    if not slug.isidentifier():
+        # If it's not a valid identifier (e.g., starts with a digit)
+        if slug[0].isdigit():
+            slug = f"p_{slug}"
+        # If still not an identifier, provide a default
+        if not slug.isidentifier():
+            return "default_package_name"
+
+    return slug
+
+
+def is_valid_python_package_name(slug: str) -> tuple[bool, str | None]:
+    """
+    Checks if the given slug is a valid PEP 8 Python package name.
+    - Must be a valid Python identifier.
+    - Must be all lowercase.
+    - Should only contain lowercase letters, numbers (not starting), and underscores.
+
+    Args:
+        slug: The Python package slug to validate.
+
+    Returns:
+        A tuple (is_valid, message). Message is None if valid.
+    """
+    if not slug:
+        return False, "Python package slug cannot be empty."
+    if not slug.isidentifier():
+        return (
+            False,
+            f"Derived Python package slug '{slug}' is not a valid Python identifier "
+            "(e.g., cannot start with a digit or contain hyphens/spaces).",
+        )
+    if not slug.islower():  # isidentifier allows uppercase, but PEP 8 wants lowercase
+        # This check might be redundant if derive_python_package_slug
+        # always produces lowercase
+        return (
+            False,
+            f"Derived Python package slug '{slug}' should be all lowercase.",
+        )
+    # Further check for characters, though isidentifier should cover most.
+    # PEP 8: "modules should have short, all-lowercase names. Underscores can be
+    # used in the module name if it improves readability."
+    # isidentifier() handles a-z, 0-9, _ expectations.
+    return True, None
 
 
 def pep503_name_ok(project_name: str) -> tuple[bool, str | None]:

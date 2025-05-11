@@ -140,7 +140,19 @@ Rules
 
 Please follow the existing code style. We use `ruff` for formatting and quick linting, and `pylint` for more thorough static analysis. We also use `pyright` with `strict` level type checking.
 
-Configuration can be found in `pyproject.toml`, `.ruff.toml`, and `.pylintrc`.
+To set that up on the commandline, install pyright:
+
+```bash
+pnpm install -g pyright
+```
+
+And then you can invoke it in the repo directory:
+
+```bash
+pyright
+```
+
+Configurations can be found in `pyproject.toml`, `.ruff.toml`, and `.pylintrc`.
 
 Ensure you run the linters before committing (see step 7 above).
 
