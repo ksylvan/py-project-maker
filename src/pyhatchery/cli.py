@@ -151,6 +151,7 @@ def main(argv: list[str] | None = None) -> int:
         )
 
         # TODO: Add --no-interactive flag check here later (Story 1.3)
+        # Look in ai/stories/01.03.story.md
         # For now, always assume interactive mode if 'new' command is used.
 
         project_details = collect_project_details(project_name, name_warnings)

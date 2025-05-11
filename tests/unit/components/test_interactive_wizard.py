@@ -185,7 +185,7 @@ class TestCollectProjectDetails:
         mock_prompt_value.side_effect = [
             "Author From Prompt",
             "email@prompt.com",
-            "ghprompt",
+            "gh_user_prompt",
             "Desc Prompt",
         ]
         mock_prompt_choice.side_effect = [DEFAULT_LICENSE, DEFAULT_PYTHON_VERSION]
@@ -194,7 +194,8 @@ class TestCollectProjectDetails:
 
         assert result is not None
         assert result["author_name"] == "Author From Prompt"
-        # ... other assertions similar to above
+        assert result["author_email"] == "email@prompt.com"
+        assert result["github_username"] == "gh_user_prompt"
         mock_proceed_input.assert_called_once_with(
             "Proceed with this name? (yes/no, default: yes): "
         )

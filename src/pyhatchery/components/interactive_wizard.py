@@ -80,7 +80,7 @@ def collect_project_details(
             print(f"  - {warning}")
         proceed_prompt = "Proceed with this name? (yes/no, default: yes): "
         proceed = input(proceed_prompt).strip().lower()
-        if proceed == "no":
+        if proceed in {"no", "n"}:
             print("Exiting project generation.")
             return None
         print("-" * 30)  # Separator after handling warnings
