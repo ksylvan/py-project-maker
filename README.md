@@ -96,7 +96,7 @@ Happy hacking!!!
 
 PyHatchery creates projects based on its embedded template structure. This includes a standard layout for Python projects, such as:
 
-- `your_project_name/`: The main package directory.
+- `src/your_project_name/`: The main package directory.
 - `tests/`: For your unit and integration tests.
 - `docs/`: For project documentation.
 - `pyproject.toml`: Pre-configured for `uv`, `hatchling`, `ruff`, `pylint`, and your project metadata.
