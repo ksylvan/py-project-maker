@@ -25,6 +25,7 @@
 		"mypy",
 		"pathlib",
 		"pexpect",
+		"problematicname",
 		"pushable",
 		"pycache",
 		"pyenv",
