@@ -84,9 +84,6 @@ class TestPromptForChoice:
         ]
         mock_click.assert_has_calls(expected_calls, any_order=True)
         # Updated to check mock_click.method_calls directly
-        # Ensure all expected calls were made, regardless of order
-        mock_click.assert_has_calls(expected_calls, any_order=True)
-
     @patch(f"{MODULE_PATH}.input")
     def test_accepts_default_choice_on_enter(self, mock_input: MagicMock):
         """Test accepting the default choice by pressing Enter."""
