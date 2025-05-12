@@ -48,9 +48,10 @@ pip install pyhatchery
 Using PyHatchery is designed to be simple and intuitive. Open your terminal and run:
 
 ```bash
-# TODO: This needs to be fleshed out...
 pyhatchery new your_project_name
 ```
+
+![alt text][cli-run-example]
 
 PyHatchery will then typically:
 
@@ -62,6 +63,10 @@ PyHatchery will then typically:
 3. **Personalize Files:** It intelligently updates key files (like `pyproject.toml`, `LICENSE`, `README.md_template`) with your provided project name, author details, and the current copyright year.
 4. **Finalize Structure:** Sets up a fresh project structure in a new directory named `your_project_name`.
 5. **Clean Up:** Removes the template's `.git` history, allowing you to initialize your own version control.
+
+> NOTE: `pyhatchery` will also check if the project name you have chosen is already taken on `PyPi`. It will then present you with a choice:
+
+![alt text][cli-project-taken]
 
 Once completed, navigate to your new project:
 
@@ -135,3 +140,5 @@ Copyright (c) 2025, [Kayvan Sylvan](mailto:kayvan@sylvan.com)
 [mit_license_link]: https://opensource.org/licenses/MIT
 [mit_license]: https://img.shields.io/badge/License-MIT-yellow.svg
 [project_brief]: ./docs/project_brief.md
+[cli-run-example]: docs/pyhatchery-cli-run.png
+[cli-project-taken]: docs/pyhatchery-project-check.png
