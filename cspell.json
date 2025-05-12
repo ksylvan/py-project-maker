@@ -18,6 +18,7 @@
 		"direnv",
 		"docstrings",
 		"dotenv",
+		"envuser",
 		"htmlcov",
 		"HTTPC",
 		"ipynb",
