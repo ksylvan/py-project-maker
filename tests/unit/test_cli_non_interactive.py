@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 # We access a private function for testing purposes
 from pyhatchery.cli import (
-    _get_project_details_non_interactive,  # pylint: disable=protected-access # type: ignore
+    internal_get_project_details_non_interactive_for_testing,
     main,
 )
 from pyhatchery.components.interactive_wizard import (
@@ -228,7 +228,7 @@ class TestNonInteractiveMode:
         name_warnings = ["Warning 1", "Warning 2"]
 
         with patch("pyhatchery.cli.click.secho") as mock_secho:
-            result = _get_project_details_non_interactive(
+            result = internal_get_project_details_non_interactive_for_testing(
                 args_mock, name_warnings, "test-project"
             )
 
@@ -259,7 +259,9 @@ class TestNonInteractiveMode:
             "PROJECT_DESCRIPTION": "Description from env",
         }
 
-        result = _get_project_details_non_interactive(args_mock, [], "test-project")
+        result = internal_get_project_details_non_interactive_for_testing(
+            args_mock, [], "test-project"
+        )
 
         assert result is not None
         assert result["author_name"] == "CLI Author"  # From CLI

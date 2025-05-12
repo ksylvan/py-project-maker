@@ -160,6 +160,12 @@ def _get_project_details_non_interactive(
     return details
 
 
+# Public alias for testing purposes
+internal_get_project_details_non_interactive_for_testing = (
+    _get_project_details_non_interactive
+)
+
+
 def _handle_new_command(
     args: argparse.Namespace, new_parser: argparse.ArgumentParser, debug_flag: bool
 ) -> int:
