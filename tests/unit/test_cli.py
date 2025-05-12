@@ -1,12 +1,11 @@
 """Unit tests for the PyHatchery CLI."""
 
 import io
+import os
+import unittest
 from unittest.mock import MagicMock, patch
 
 from pyhatchery.cli import main
-
-# To capture stdout/stderr, argparse's behavior of calling sys.exit directly
-# needs to be handled. We can patch sys.exit.
 
 
 def run_cli_capture_output(args_list: list[str]):
@@ -51,269 +50,270 @@ def run_cli_capture_output(args_list: list[str]):
     return stdout_capture.getvalue(), stderr_capture.getvalue(), exit_code, mock_exit
 
 
-class TestCli:
+class TestCli(unittest.TestCase):
     """Tests for CLI interactions."""
 
-    # Test for original success case, now needs mocks for new validation steps
-    @patch("pyhatchery.cli.pep503_name_ok", return_value=(True, None))
-    @patch("pyhatchery.cli.pep503_normalize", return_value="my-new-project")
-    @patch(
-        "pyhatchery.cli.derive_python_package_slug", return_value="mocked_python_slug"
-    )
-    @patch(
-        "pyhatchery.cli.check_pypi_availability", return_value=(False, None)
-    )  # Available, no error
-    @patch(
-        "pyhatchery.cli.is_valid_python_package_name", return_value=(True, None)
-    )  # Valid
-    # pylint: disable=too-many-arguments, too-many-positional-arguments
-    def test_new_project_success_no_warnings(
-        self,
-        mock_is_valid_python_slug: MagicMock,
-        mock_check_pypi: MagicMock,
-        mock_derive_python_slug: MagicMock,
-        mock_normalize: MagicMock,
-        mock_pep503_ok: MagicMock,
-    ):
+    def setUp(self):
+        """Set up common test mocks."""
+        self.mock_collect_details = patch(
+            "pyhatchery.cli.collect_project_details"
+        ).start()
+        self.mock_pep503_ok = patch("pyhatchery.cli.pep503_name_ok").start()
+        self.mock_normalize = patch("pyhatchery.cli.pep503_normalize").start()
+        self.mock_derive_python_slug = patch(
+            "pyhatchery.cli.derive_python_package_slug"
+        ).start()
+        self.mock_check_pypi = patch("pyhatchery.cli.check_pypi_availability").start()
+        self.mock_is_valid_python_name = patch(
+            "pyhatchery.cli.is_valid_python_package_name"
+        ).start()
+
+        # Set default return values
+        self.mock_pep503_ok.return_value = (True, None)
+        self.mock_normalize.return_value = "my-new-project"
+        self.mock_derive_python_slug.return_value = "mocked_python_slug"
+        self.mock_check_pypi.return_value = (False, None)
+        self.mock_is_valid_python_name.return_value = (True, None)
+        self.mock_collect_details.return_value = {"author_name": "Test Author"}
+        os.environ["PYHATCHERY_DEBUG"] = "1"  # Set environment variable for testing
+
+    def tearDown(self):
+        """Clean up patches."""
+        patch.stopall()
+        os.environ.pop("PYHATCHERY_DEBUG", None)  # Clean up environment variable
+
+    def test_new_project_success_no_warnings(self):
         """Test `pyhatchery new project_name` succeeds with no warnings."""
+        # Set up
         project_name = "my-new-project"  # Already normalized
-        normalized_name = project_name  # Mock should return same name
+        normalized_name = project_name
+
+        # Run CLI command
         stdout, stderr, exit_code, _ = run_cli_capture_output(["new", project_name])
 
-        expected_stdout = f"Creating new project: {normalized_name}\n"
-        # Stderr will contain the debug prints for slugs
-        expected_stderr_part_pypi = "Derived PyPI slug: my-new-project"
-        expected_stderr_part_python = "Derived Python package slug: mocked_python_slug"
+        # Assert stdout
+        self.assertIn(f"Creating new project: {normalized_name}\n", stdout)
+        self.assertIn("With details: {'author_name': 'Test Author'}\n", stdout)
 
-        assert stdout == expected_stdout
-        assert expected_stderr_part_pypi in stderr
-        assert expected_stderr_part_python in stderr
-        # Check that no *warning* messages are in stderr
-        assert "Warning:" not in stderr
-        assert exit_code == 0
-        mock_pep503_ok.assert_called_once_with(project_name)
-        mock_normalize.assert_called_once_with(project_name)
-        mock_derive_python_slug.assert_called_once_with(project_name)
-        mock_check_pypi.assert_called_once_with("my-new-project")
-        mock_is_valid_python_slug.assert_called_once_with("mocked_python_slug")
+        # Assert stderr
+        self.assertIn("Derived PyPI slug: my-new-project", stderr)
+        self.assertIn("Derived Python package slug: mocked_python_slug", stderr)
+        self.assertNotIn("Warning:", stderr)  # Check for absence of warnings
+
+        # Assert exit code and function calls
+        self.assertEqual(exit_code, 0)
+        self.mock_pep503_ok.assert_called_once_with(project_name)
+        self.mock_normalize.assert_called_once_with(project_name)
+        self.mock_derive_python_slug.assert_called_once_with(normalized_name)
+        self.mock_check_pypi.assert_called_once_with(normalized_name)
+        self.mock_is_valid_python_name.assert_called_once_with("mocked_python_slug")
+        self.mock_collect_details.assert_called_once_with(normalized_name, [])
 
     def test_new_project_no_name_ac2(self):
-        """AC2: `pyhatchery new` without project name displays error and help."""
-        # Argparse handles missing required arguments by printing to stderr and exiting.
-        # The exit code for argparse error is typically 2.
+        """Test `pyhatchery new` without project name displays error and help (AC2)."""
         stdout, stderr, exit_code, mock_exit = run_cli_capture_output(["new"])
 
-        assert (
+        self.assertTrue(
             "usage: pyhatchery new [-h] project_name" in stderr
             or "usage: pyhatchery new project_name" in stderr
-        )  # depending on argparse version/setup
-        assert "error: the following arguments are required: project_name" in stderr
-        assert stdout == ""
-        assert exit_code == 2  # Argparse exits with 2 on argument errors
+        )
+        self.assertIn(
+            "error: the following arguments are required: project_name", stderr
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(exit_code, 2)
         mock_exit.assert_called_once_with(2)
 
     def test_new_project_empty_name_string_ac3(self):
-        """AC3: Invalid project names (empty string) result in an error."""
-        # Test with an explicitly empty string argument
+        """Test `pyhatchery new ""` (empty project name) results in an error (AC3)."""
         stdout, stderr, exit_code, _ = run_cli_capture_output(["new", ""])
 
-        assert "Error: Project name cannot be empty." in stderr
-        assert (
+        self.assertIn("Error: Project name cannot be empty.", stderr)
+        self.assertTrue(
             "usage: pyhatchery new [-h] project_name" in stderr
             or "usage: pyhatchery new project_name" in stderr
         )
-        assert stdout == ""
-        assert exit_code == 1
-        # mock_exit is not called here because main() returns directly
+        self.assertEqual(stdout, "")
+        self.assertEqual(exit_code, 1)
 
-    @patch(
-        "pyhatchery.cli.pep503_name_ok",
-        return_value=(False, "Initial name format error."),
-    )
-    @patch("pyhatchery.cli.pep503_normalize", return_value="pypi-slug")
-    @patch("pyhatchery.cli.derive_python_package_slug", return_value="python_slug")
-    @patch(
-        "pyhatchery.cli.check_pypi_availability", return_value=(False, None)
-    )  # Available
-    @patch(
-        "pyhatchery.cli.is_valid_python_package_name", return_value=(True, None)
-    )  # Valid
-    # pylint: disable=too-many-arguments, too-many-positional-arguments
-    def test_new_project_initial_name_invalid_warning(
-        self,
-        _mock_is_valid_python_slug: MagicMock,
-        _mock_check_pypi: MagicMock,
-        _mock_derive_python_slug: MagicMock,
-        _mock_normalize: MagicMock,
-        mock_pep503_ok: MagicMock,
-    ):
-        """Test warning for initial project name format, but still proceeds."""
+    def test_new_project_initial_name_invalid_warning(self):
+        """Test warning for initial project name format error."""
+        # Override mock return values for this test
+        self.mock_pep503_ok.return_value = (False, "Initial name format error.")
+        self.mock_normalize.return_value = "pypi-slug"
+        self.mock_derive_python_slug.return_value = "python_slug"
+
+        # Set up test variables
         invalid_name = "Invalid_Project_Name_Caps"
+        normalized_name_mock = "pypi-slug"
+
+        # Run CLI command
         stdout, stderr, exit_code, _ = run_cli_capture_output(["new", invalid_name])
 
-        # Should show normalized name, which comes from the mock
-        assert "Creating new project: pypi-slug" in stdout
-        assert (
-            f"Warning: Project name '{invalid_name}': Initial name format error."
-            in stderr
-        )
-        assert "Derived PyPI slug: pypi-slug" in stderr
-        assert "Derived Python package slug: python_slug" in stderr
-        assert exit_code == 0
-        mock_pep503_ok.assert_called_once_with(invalid_name)
-
-    @patch("pyhatchery.cli.pep503_name_ok", return_value=(True, None))
-    @patch("pyhatchery.cli.pep503_normalize", return_value="taken-pypi-name")
-    @patch(
-        "pyhatchery.cli.derive_python_package_slug", return_value="valid_python_slug"
-    )
-    @patch("pyhatchery.cli.check_pypi_availability", return_value=(True, None))  # Taken
-    @patch(
-        "pyhatchery.cli.is_valid_python_package_name", return_value=(True, None)
-    )  # Valid
-    # pylint: disable=too-many-arguments, too-many-positional-arguments
-    def test_new_project_pypi_name_taken_warning(
-        self,
-        _mock_is_valid_python_slug: MagicMock,
-        _mock_check_pypi: MagicMock,  # Decorator sets behavior, key to test
-        _mock_derive_python_slug: MagicMock,
-        _mock_normalize: MagicMock,
-        _mock_pep503_ok: MagicMock,
-    ):
-        """Test warning if PyPI name is taken."""
-        project_name = "someproject"
-        stdout, stderr, exit_code, _ = run_cli_capture_output(["new", project_name])
-
-        # Should show normalized name from mock
-        assert "Creating new project: taken-pypi-name" in stdout
-        assert (
-            "Warning: The name 'taken-pypi-name' might already be taken on PyPI."
-            in stderr
-        )
-        assert exit_code == 0
-
-    @patch("pyhatchery.cli.pep503_name_ok", return_value=(True, None))
-    @patch("pyhatchery.cli.pep503_normalize", return_value="pypi-name")
-    @patch(
-        "pyhatchery.cli.derive_python_package_slug", return_value="valid_python_slug"
-    )
-    @patch(
-        "pyhatchery.cli.check_pypi_availability",
-        return_value=(None, "Network error during PyPI check"),
-    )  # Check failed
-    @patch(
-        "pyhatchery.cli.is_valid_python_package_name", return_value=(True, None)
-    )  # Valid
-    # pylint: disable=too-many-arguments, too-many-positional-arguments
-    def test_new_project_pypi_check_fails_warning(
-        self,
-        _mock_is_valid_python_slug: MagicMock,
-        _mock_check_pypi: MagicMock,  # This mock's behavior is set by the decorator
-        _mock_derive_python_slug: MagicMock,
-        _mock_normalize: MagicMock,
-        _mock_pep503_ok: MagicMock,
-    ):
-        """Test warning if PyPI availability check fails."""
-        project_name = "someproject"
-        stdout, stderr, exit_code, _ = run_cli_capture_output(["new", project_name])
-
-        # Should show normalized name from mock
-        assert "Creating new project: pypi-name" in stdout
+        # Assert stdout/stderr
         expected_warning = (
+            f"Warning: Project name '{invalid_name}': Initial name format error."
+        )
+        self.assertIn(f"Creating new project: {normalized_name_mock}", stdout)
+        self.assertIn("With details: {'author_name': 'Test Author'}", stdout)
+        self.assertIn(expected_warning, stderr)
+        self.assertIn("Derived PyPI slug: pypi-slug", stderr)
+        self.assertIn("Derived Python package slug: python_slug", stderr)
+        self.assertEqual(exit_code, 0)
+
+        # Assert function calls
+        self.mock_pep503_ok.assert_called_once_with(invalid_name)
+        self.mock_collect_details.assert_called_once_with(normalized_name_mock, [])
+
+    def test_new_project_pypi_name_taken_warning(self):
+        """Test warning when derived PyPI name is likely taken."""
+        # Override mock return values for this test
+        self.mock_normalize.return_value = "taken-pypi-name"
+        self.mock_derive_python_slug.return_value = "valid_python_slug"
+        self.mock_check_pypi.return_value = (True, None)  # Taken
+
+        # Set up test variables
+        project_name = "someproject"
+        normalized_name_mock = "taken-pypi-name"
+
+        # Run CLI command
+        stdout, stderr, exit_code, _ = run_cli_capture_output(["new", project_name])
+
+        # Assert stdout/stderr
+        warning_msg = (
+            "Warning: The name 'taken-pypi-name' might already be taken on PyPI."
+        )
+        self.assertIn(f"Creating new project: {normalized_name_mock}", stdout)
+        self.assertIn("With details: {'author_name': 'Test Author'}", stdout)
+        self.assertIn(warning_msg, stderr)
+        self.assertEqual(exit_code, 0)
+
+        # Assert function call with expected warnings
+        expected_warnings = [
+            "The name 'taken-pypi-name' might already be taken on PyPI. "
+            "You may want to choose a different name if you plan to publish "
+            "this package publicly."
+        ]
+        self.mock_collect_details.assert_called_once_with(
+            normalized_name_mock, expected_warnings
+        )
+
+    def test_new_project_pypi_check_fails_warning(self):
+        """Test warning when PyPI availability check fails."""
+        # Override mock return values for this test
+        self.mock_normalize.return_value = "pypi-name"
+        self.mock_derive_python_slug.return_value = "valid_python_slug"
+        self.mock_check_pypi.return_value = (None, "Network error during PyPI check")
+
+        # Set up test variables
+        project_name = "someproject"
+        normalized_name_mock = "pypi-name"
+
+        # Run CLI command
+        stdout, stderr, exit_code, _ = run_cli_capture_output(["new", project_name])
+
+        # Assert stdout/stderr
+        warning_msg = (
             "Warning: PyPI availability check for 'pypi-name' failed: "
             "Network error during PyPI check"
         )
-        assert expected_warning in stderr
-        assert exit_code == 0
+        self.assertIn(f"Creating new project: {normalized_name_mock}", stdout)
+        self.assertIn("With details: {'author_name': 'Test Author'}", stdout)
+        self.assertIn(warning_msg, stderr)
+        self.assertEqual(exit_code, 0)
 
-    @patch("pyhatchery.cli.pep503_name_ok", return_value=(True, None))
-    @patch("pyhatchery.cli.pep503_normalize", return_value="someprojectwithcaps")
-    @patch(
-        "pyhatchery.cli.derive_python_package_slug", return_value="Invalid_Python_Slug"
-    )
-    @patch(
-        "pyhatchery.cli.check_pypi_availability", return_value=(False, None)
-    )  # Available
-    @patch(
-        "pyhatchery.cli.is_valid_python_package_name",
-        return_value=(False, "Not PEP 8 compliant error message."),
-    )  # Invalid
-    # pylint: disable=too-many-arguments, too-many-positional-arguments
-    def test_new_project_invalid_python_slug_warning(
-        self,
-        _mock_is_valid_python_slug: MagicMock,  # Decorator sets behavior
-        _mock_check_pypi: MagicMock,
-        _mock_derive_python_slug: MagicMock,
-        _mock_normalize: MagicMock,
-        _mock_pep503_ok: MagicMock,
-    ):
-        """Test warning if derived Python package slug is not PEP 8 compliant."""
+        # Assert function call with expected warnings
+        expected_warnings = [warning_msg.replace("Warning: ", "")]
+        self.mock_collect_details.assert_called_once_with(
+            normalized_name_mock, expected_warnings
+        )
+
+    def test_new_project_invalid_python_slug_warning(self):
+        """Test warning when derived Python package slug is not PEP 8 compliant."""
+        # Override mock return values for this test
+        self.mock_normalize.return_value = "someprojectwithcaps"
+        self.mock_derive_python_slug.return_value = "Invalid_Python_Slug"
+        self.mock_is_valid_python_name.return_value = (False, "Not PEP 8 compliant.")
+
+        # Set up test variables
         project_name = "SomeProjectWithCaps"
+        normalized_name_mock = "someprojectwithcaps"
+
+        # Run CLI command
         stdout, stderr, exit_code, _ = run_cli_capture_output(["new", project_name])
 
-        # Should show normalized name from mock
-        assert "Creating new project: someprojectwithcaps" in stdout
-        # Update expected warning to use normalized name as the input reference
-        expected_warning = (
+        # Assert stdout/stderr
+        warning_msg = (
             "Warning: Derived Python package name 'Invalid_Python_Slug' "
             "(from input 'someprojectwithcaps') is not PEP 8 compliant: "
-            "Not PEP 8 compliant error message."
+            "Not PEP 8 compliant."
         )
-        assert expected_warning in stderr
-        assert exit_code == 0
+        self.assertIn(f"Creating new project: {normalized_name_mock}", stdout)
+        self.assertIn("With details: {'author_name': 'Test Author'}", stdout)
+        self.assertIn(warning_msg, stderr)
+        self.assertEqual(exit_code, 0)
 
-    @patch(
-        "pyhatchery.cli.pep503_name_ok", return_value=(False, "Initial name problem.")
-    )
-    @patch("pyhatchery.cli.pep503_normalize", return_value="problematicname")
-    @patch(
-        "pyhatchery.cli.derive_python_package_slug", return_value="Invalid_Python_Slug"
-    )
-    @patch("pyhatchery.cli.check_pypi_availability", return_value=(True, None))  # Taken
-    @patch(
-        "pyhatchery.cli.is_valid_python_package_name",
-        return_value=(False, "Python slug invalid message."),
-    )  # Invalid
-    # pylint: disable=too-many-arguments, too-many-positional-arguments
-    def test_new_project_all_warnings_and_proceeds(
-        self,
-        _mock_is_valid_python_slug: MagicMock,
-        _mock_check_pypi: MagicMock,
-        _mock_derive_python_slug: MagicMock,
-        _mock_normalize: MagicMock,
-        _mock_pep503_ok: MagicMock,
-    ):
-        """Test CLI proceeds with exit code 0 for all warnings."""
+        # Assert function call with expected warnings
+        expected_warnings = [warning_msg.replace("Warning: ", "")]
+        self.mock_collect_details.assert_called_once_with(
+            normalized_name_mock, expected_warnings
+        )
+
+    def test_new_project_all_warnings_and_proceeds(self):
+        """Test CLI proceeds correctly when multiple warnings are present."""
+        # Override mock return values for this test
+        self.mock_pep503_ok.return_value = (False, "Initial name problem.")
+        self.mock_normalize.return_value = "problematicname"
+        self.mock_derive_python_slug.return_value = "Invalid_Python_Slug"
+        self.mock_check_pypi.return_value = (True, None)  # Taken
+        self.mock_is_valid_python_name.return_value = (False, "Python slug invalid.")
+
+        # Set up test variables
         project_name = "ProblematicName"
+        normalized_name_mock = "problematicname"
+
+        # Run CLI command
         stdout, stderr, exit_code, _ = run_cli_capture_output(["new", project_name])
 
-        # Should show normalized name from mock
-        assert "Creating new project: problematicname" in stdout
-        assert (
-            f"Warning: Project name '{project_name}': Initial name problem." in stderr
+        # Assert stdout/stderr
+        self.assertIn(f"Creating new project: {normalized_name_mock}", stdout)
+        self.assertIn("With details: {'author_name': 'Test Author'}", stdout)
+        self.assertIn(
+            f"Warning: Project name '{project_name}': Initial name problem.", stderr
         )
-        assert (
-            "Warning: The name 'problematicname' might already be taken on PyPI."
-            in stderr
+        self.assertIn(
+            "Warning: The name 'problematicname' might already be taken on PyPI.",
+            stderr,
         )
-        # Update expected warning to use normalized name as the input reference
-        expected_warning_python_slug = (
+        warning_python_slug_msg = (
             "Warning: Derived Python package name 'Invalid_Python_Slug' "
             "(from input 'problematicname') is not PEP 8 compliant: "
-            "Python slug invalid message."
+            "Python slug invalid."
         )
-        assert expected_warning_python_slug in stderr
-        assert "Derived PyPI slug: problematicname" in stderr
-        assert "Derived Python package slug: Invalid_Python_Slug" in stderr
-        assert exit_code == 0
+        self.assertIn(warning_python_slug_msg, stderr)
+        self.assertIn("Derived PyPI slug: problematicname", stderr)
+        self.assertIn("Derived Python package slug: Invalid_Python_Slug", stderr)
+        self.assertEqual(exit_code, 0)
+
+        # Assert function call with expected warnings
+        expected_warnings_list = [
+            "The name 'problematicname' might already be taken on PyPI. "
+            "You may want to choose a different name if you plan to publish "
+            "this package publicly.",
+            "Derived Python package name 'Invalid_Python_Slug' "
+            "(from input 'problematicname') is not PEP 8 compliant: "
+            "Python slug invalid.",
+        ]
+        self.mock_collect_details.assert_called_once_with(
+            normalized_name_mock, expected_warnings_list
+        )
 
     def test_no_command_provided(self):
-        """Test that running `pyhatchery` without a command shows help."""
+        """Test `pyhatchery` without a command shows help and exits."""
         stdout, stderr, exit_code, _ = run_cli_capture_output([])
 
-        assert "PyHatchery: A Python project scaffolding tool." in stderr  # Description
-        assert "Commands:" in stderr
-        assert "new" in stderr  # 'new' command should be listed
-        assert stdout == ""
-        assert exit_code == 1  # Our cli.py returns 1 if command is None
-        # mock_exit is not called here because main() returns directly
+        self.assertIn("PyHatchery: A Python project scaffolding tool.", stderr)
+        self.assertIn("Commands:", stderr)
+        self.assertIn("new", stderr)
+        self.assertEqual(stdout, "")
+        self.assertEqual(exit_code, 1)

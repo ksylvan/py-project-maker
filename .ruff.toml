@@ -34,7 +34,7 @@ exclude = [
 [lint]
 # Enable Pyflakes ("F") and pycodestyle ("E", "W") rules by default.
 # Adding "I" for isort compatibility checks.
-select = ["E", "F", "W", "I"]
+select = ["E", "F", "W", "I", "BLE001"]
 ignore = ["E203"]             # Ignore whitespace before ':' (compatible with black)
 
 

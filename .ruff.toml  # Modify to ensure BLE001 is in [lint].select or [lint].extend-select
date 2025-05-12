@@ -1,0 +1,8 @@
+[ruff]
+select = ["BLE001"]
+
+[src/pyhatchery/example_broad_except.py]
+try:
+    pass
+except Exception:
+    pass

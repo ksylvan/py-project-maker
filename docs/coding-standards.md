@@ -29,10 +29,21 @@ The following high-level patterns and decisions, as detailed in `docs/architectu
 * **Asynchronous Operations:**
   * PyHatchery is primarily a synchronous CLI application. Asynchronous operations (e.g., using `asyncio`) are not expected to be a major part of its core logic.
   * If any specific I/O-bound operation (beyond the single PyPI check) is identified as a significant performance bottleneck, `asyncio` might be considered on a case-by-case basis, but the default is synchronous code.
+* **User Interactions:**
+  * We should always use the `click` library (`click.echo()` or `click.secho()`, generally) to print out information
+    for the user of the CLI. Do not use standard `print()` or other variants.
+  * Use `click()` styling wherever appropriate. For example, using yellow text for warnings:
+
+    ```python
+    click.secho(f"Warning: {msg}", fg="yellow", err=True)
+    ```
+
 * **Type Safety:**
   * **Type Hints:** Python type hints (PEP 484) must be used for all function signatures (arguments and return types) and variable annotations where appropriate.
-  * Strive for code that passes static type checking (e.g., via Ruff's capabilities or implicitly by MyPy if run).
-  * Use types from the `typing` module as needed (e.g., `List`, `Dict`, `Optional`, `Any` when truly necessary).
+  * Strive for code that passes static type checking (e.g., via Ruff's capabilities or implicitly by Pyright if run).
+  * Use types from the `typing` module as needed (e.g., `Optional`, `Any` when truly necessary).
+  * DO NOT use `# pylint` or other means to disable type checking or linting. For example, in a try/except block, catch specific
+  exceptions, not `Exception` with a `# pylint: disable=broad-except`
 * **Comments & Documentation:**
   * **Docstrings:** All public modules, classes, functions, and methods must have comprehensive docstrings. Google Python Style Docstrings are preferred for consistency.
     * Example:

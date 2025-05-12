@@ -12,7 +12,7 @@
 		{
 			"label": "Run Test Suite",
 			"type": "shell",
-			"command": "cd ${workspaceFolder} && pytest -v",
+			"command": "cd ${workspaceFolder} && uv run pytest -v",
 			"group": {
 				"kind": "test",
 				"isDefault": true
@@ -23,9 +23,21 @@
 			}
 		},
 		{
-			"label": "Run Linter",
+			"label": "Run Linters",
 			"type": "shell",
-			"command": "cd ${workspaceFolder} && ruff check . && pylint .",
+			"command": "cd ${workspaceFolder} && uv run ruff check . && uv run pylint .",
+			"group": {
+				"kind": "test",
+				"isDefault": true
+			},
+			"presentation": {
+				"reveal": "always"
+			}
+		},
+		{
+			"label": "Run Pyright",
+			"type": "shell",
+			"command": "cd ${workspaceFolder} && uv run pyright .",
 			"group": {
 				"kind": "test",
 				"isDefault": true
