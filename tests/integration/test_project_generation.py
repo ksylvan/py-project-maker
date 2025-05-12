@@ -1,10 +1,8 @@
 """Integration tests for PyHatchery CLI."""
 
+import os
 import subprocess
 import sys
-from unittest.mock import MagicMock, patch
-
-import pytest
 
 from pyhatchery.__about__ import __version__
 
@@ -42,33 +40,60 @@ def run_cli_command(args: list[str], expected_returncode: int = 0) -> tuple[str,
 class TestCliIntegration:
     """Integration tests for the PyHatchery CLI."""
 
-    @pytest.mark.skip(
-        reason="Wizard in subprocess fails without stdin. Re-enable with Story 1.3."
-    )  # type: ignore
-    @patch("pyhatchery.cli.collect_project_details")
-    def test_new_project_success(self, mock_collect_details: MagicMock):
-        """Test that 'pyhatchery new my_project' works correctly
-        and creates a normalized project name."""
-        # TODO: Re-enable/adapt with non-interactive mode (Story 1.3).
-        # Fails due to wizard input in subprocess.
+    def teardown_method(self):
+        """Clean up any environment variables set during tests."""
+        if "PYHATCHERY_DEBUG" in os.environ:
+            os.environ.pop("PYHATCHERY_DEBUG")
+
+    def test_new_project_success_non_interactive(self):
+        """Test that 'pyhatchery new my_project' with non-interactive mode."""
         project_name = "my_test_project"
         normalized_name = "my-test-project"
 
-        mock_collect_details.return_value = {
-            "author_name": "Integration Test Author",
-            "author_email": "integration@test.com",
-            "github_username": "testuser",
-            "project_description": "A project for integration testing.",
-            "license": "MIT",
-            "python_version_preference": "3.11",
-        }
+        # Use non-interactive mode with all details provided via CLI flags
+        args = [
+            "new",
+            project_name,
+            "--no-interactive",
+            "--author",
+            "Integration Test Author",
+            "--email",
+            "integration@test.com",
+            "--github-username",
+            "testuser",
+            "--description",
+            "A project for integration testing.",
+            "--license",
+            "MIT",
+            "--python-version",
+            "3.11",
+        ]
 
-        stdout, stderr = run_cli_command(["new", project_name])
+        # Set environment variable for debug instead of using --debug flag
+        os.environ["PYHATCHERY_DEBUG"] = "1"
+
+        stdout, stderr = run_cli_command(args)
 
         assert f"Creating new project: {normalized_name}" in stdout
-        assert "With details: {'author_name': 'Integration Test Author'" in stdout
+        assert "With details:" in stdout
+        assert "Integration Test Author" in stdout
+        assert "integration@test.com" in stdout
         assert "Derived PyPI slug:" in stderr
         assert "Derived Python package slug:" in stderr
+
+    def test_new_project_missing_required_fields(self):
+        """Test that non-interactive mode with missing required fields shows error."""
+        stdout, stderr = run_cli_command(
+            ["new", "my-project", "--no-interactive"], expected_returncode=1
+        )
+
+        assert stdout == ""
+        assert (
+            "Error: The following required fields are missing in non-interactive mode:"
+            in stderr
+        )
+        assert "author_name" in stderr
+        assert "author_email" in stderr
 
     def test_missing_project_name(self):
         """Test that 'pyhatchery new' without a name shows an error."""
