@@ -48,5 +48,5 @@
 | Change        | Date       | Version | Description                                     | Author      |
 | ------------- | ---------- | ------- | ----------------------------------------------- | ----------- |
 | Initial draft | 2025-05-09 | 0.1     | Initial draft based on PRD and Project Brief. | 3-Architect |
-| Agile documented | 2025-05-10 | 0.2     | Added note about AI-Agile tasks folder. | Kayvan |
-| pyright added | 2025-05-10 | 0.3    | Pyright and strict typing | Kayvan |
+| Agile documented | 2025-05-10 | 0.2     | Added note about AI-Agile tasks folder. | Kayvan Sylvan |
+| pyright added | 2025-05-10 | 0.3    | Pyright and strict typing | Kayvan Sylvan |

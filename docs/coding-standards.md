@@ -48,22 +48,22 @@ The following high-level patterns and decisions, as detailed in `docs/architectu
   * **Docstrings:** All public modules, classes, functions, and methods must have comprehensive docstrings. Google Python Style Docstrings are preferred for consistency.
     * Example:
 
-            ```python
-            def my_function(param1: str, param2: int) -> bool:
-                """Does something interesting.
+    ```python
+    def my_function(param1: str, param2: int) -> bool:
+        """Does something interesting.
 
-                Args:
-                    param1: The first parameter, a string.
-                    param2: The second parameter, an integer.
+        Args:
+            param1: The first parameter, a string.
+            param2: The second parameter, an integer.
 
-                Returns:
-                    True if successful, False otherwise.
+        Returns:
+            True if successful, False otherwise.
 
-                Raises:
-                    ValueError: If param1 is invalid.
-                """
-                # ...
-            ```
+        Raises:
+            ValueError: If param1 is invalid.
+        """
+        # ...
+    ```
 
   * **Inline Comments:** Use inline comments (`#`) to explain complex or non-obvious sections of code. Avoid commenting on obvious code.
   * **TODO/FIXME Comments:** Use `TODO:` for planned enhancements and `FIXME:` for known issues that need correction. Include a brief explanation.

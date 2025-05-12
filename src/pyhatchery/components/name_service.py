@@ -5,9 +5,9 @@ import re
 
 _PEP503_VALID_RE = re.compile(
     r"^[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?$",
-    re.IGNORECASE | re.ASCII,  # keeps matching strictly ASCII
+    re.IGNORECASE | re.ASCII,
 )
-_MAX_LEN = 32  # “short”: pragmatic cap
+_MAX_LEN = 32
 
 
 def pep503_normalize(name: str) -> str:
@@ -29,16 +29,9 @@ def pep503_normalize(name: str) -> str:
     Returns:
         str: The PEP 503-compatible normalized slug.
     """
-    # Step 1: Convert the string to lowercase
     name = name.lower()
-
-    # Step 2: Replace any character not in [a-z0-9._-] with a hyphen
     name = re.sub(r"[^a-z0-9._-]+", "-", name)
-
-    # Step 3: Collapse consecutive invalid characters (., _, -) into a single hyphen
     name = re.sub(r"[-_.]+", "-", name)
-
-    # Step 4: Strip leading and trailing hyphens
     name = name.strip("-")
     return name
 
@@ -55,29 +48,20 @@ def derive_python_package_slug(name: str) -> str:
     Returns:
         A string suitable for use as a Python package name.
     """
-    # Replace non-alphanumeric characters (except underscores) with underscores
     slug = re.sub(r"[^a-zA-Z0-9_]", "_", name)
-    # Convert to lowercase
     slug = slug.lower()
-    # Consolidate multiple underscores
     slug = re.sub(r"_+", "_", slug)
-    # Remove leading/trailing underscores
     slug = slug.strip("_")
 
-    # Ensure it's a valid Python identifier
-    if not slug:  # Handle empty string case
+    if not slug:
         return "default_package_name"
-
-    # Check if it's a Python keyword
 
     if keyword.iskeyword(slug):
         return "default_package_name"
 
     if not slug.isidentifier():
-        # If it's not a valid identifier (e.g., starts with a digit)
         if slug[0].isdigit():
             slug = f"p_{slug}"
-        # If still not an identifier, provide a default
         if not slug.isidentifier():
             return "default_package_name"
 
@@ -105,17 +89,11 @@ def is_valid_python_package_name(slug: str) -> tuple[bool, str | None]:
             f"Derived Python package slug '{slug}' is not a valid Python identifier "
             "(e.g., cannot start with a digit or contain hyphens/spaces).",
         )
-    if not slug.islower():  # isidentifier allows uppercase, but PEP 8 wants lowercase
-        # This check might be redundant if derive_python_package_slug
-        # always produces lowercase
+    if not slug.islower():
         return (
             False,
             f"Derived Python package slug '{slug}' should be all lowercase.",
         )
-    # Further check for characters, though isidentifier should cover most.
-    # PEP 8: "modules should have short, all-lowercase names. Underscores can be
-    # used in the module name if it improves readability."
-    # isidentifier() handles a-z, 0-9, _ expectations.
     return True, None
 
 
@@ -146,9 +124,7 @@ def pep503_name_ok(project_name: str) -> tuple[bool, str | None]:
             False,
             f"Project name '{project_name}' is too long (max {_MAX_LEN} chars).",
         )
-    if (
-        project_name.count("_") + project_name.count("-")
-    ) > 2:  # keep names terse/readable
+    if (project_name.count("_") + project_name.count("-")) > 2:
         return False, "Project name contains too many underscores or dashes."
     return True, None
 
@@ -170,7 +146,6 @@ def has_invalid_characters(name: str) -> tuple[bool, str | None]:
             - has_invalid: True if the name contains invalid characters
             - error_message: The invalid characters found, or None if valid
     """
-    # List of characters that should cause immediate rejection
     invalid_chars = "!@#$%^&*+=}{[]|\\/:;\"'<>"
 
     found_invalid = [char for char in invalid_chars if char in name]

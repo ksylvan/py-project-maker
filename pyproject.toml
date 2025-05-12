@@ -26,15 +26,13 @@ dependencies = ["click>=8.1.8", "python-dotenv>=1.1.0", "requests>=2.32.3"]
 [project.scripts]
 pyhatchery = "pyhatchery.cli:main"
 
-# [tool.hatch.build.targets.wheel.shared-scripts]
-# "pyhatchery/bin/pyhatchery" = "pyhatchery"
-
 [dependency-groups]
 dev = [
     "hatch>=1.14.1",
     "hatchling>=1.27.0",
     "pylint>=3.3.7",
     "pytest>=8.3.5",
+    "pytest-cov>=6.1.1",
     "ruff>=0.11.9",
     "uv>=0.7.3",
 ]

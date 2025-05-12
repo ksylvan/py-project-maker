@@ -4,14 +4,13 @@ Unit tests for the config_loader component.
 
 import subprocess
 from pathlib import Path
-from typing import Callable  # Ensure Callable is imported
+from typing import Callable
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from pyhatchery.components.config_loader import get_git_config_value, load_from_env
 
-# Test data for .env file
 ENV_CONTENT_VALID = """
 AUTHOR_NAME="Test Env Author"
 AUTHOR_EMAIL="env@example.com"
@@ -26,12 +25,10 @@ ENV_CONTENT_EMPTY = ""
 @pytest.fixture(name="temp_env_file")
 def temp_env_file_fixture(
     tmp_path: Path,
-) -> Callable[..., Path]:  # Added return type hint
+) -> Callable[..., Path]:
     """Fixture to create a temporary .env file."""
 
-    def _create_env_file(
-        content: str, filename: str = ".env"
-    ) -> Path:  # Added return type hint
+    def _create_env_file(content: str, filename: str = ".env") -> Path:
         env_file = tmp_path / filename
         env_file.write_text(content)
         return env_file
@@ -63,7 +60,7 @@ class TestGetGitConfigValue:
     def test_get_git_config_value_not_set(self, mock_subprocess_run: MagicMock):
         """Test when the git config value is not set (git command returns non-zero)."""
         mock_process = MagicMock()
-        mock_process.returncode = 1  # Value not set
+        mock_process.returncode = 1
         mock_process.stdout = ""
         mock_subprocess_run.return_value = mock_process
 
@@ -90,22 +87,19 @@ class TestGetGitConfigValue:
 class TestLoadFromEnv:
     """Tests for the load_from_env function."""
 
-    @patch("pyhatchery.components.config_loader.Path")  # Outer patch
-    @patch("pyhatchery.components.config_loader.dotenv_values")  # Inner patch
+    @patch("pyhatchery.components.config_loader.Path")
+    @patch("pyhatchery.components.config_loader.dotenv_values")
     def test_load_from_env_success(
         self,
-        mock_dotenv_values_in_cl: MagicMock,  # Inner patch arg
-        mock_path_in_cl: MagicMock,  # Outer patch arg
-        temp_env_file: Callable[..., Path],  # Using the correct fixture name
+        mock_dotenv_values_in_cl: MagicMock,
+        mock_path_in_cl: MagicMock,
+        temp_env_file: Callable[..., Path],
     ):
         """Test successfully loading variables from an .env file."""
         real_env_file_path_obj = temp_env_file(ENV_CONTENT_VALID)
         real_env_file_path_str = str(real_env_file_path_obj)
 
-        # Configure the mock for Path class instantiation within config_loader
-        # This mock_path_instance will be returned when Path(...) is called
         mock_path_instance = MagicMock(spec=Path)
-        # Crucially, mock the is_file method on this instance
         mock_path_instance.is_file = MagicMock(return_value=True)
         mock_path_in_cl.return_value = mock_path_instance
 
@@ -120,23 +114,22 @@ class TestLoadFromEnv:
 
         mock_path_in_cl.assert_called_once_with(real_env_file_path_str)
         mock_path_instance.is_file.assert_called_once()
-        # dotenv_values should be called with the Path obj created in load_from_env
         mock_dotenv_values_in_cl.assert_called_once_with(dotenv_path=mock_path_instance)
         assert result == expected_loaded_vars
 
-    @patch("pyhatchery.components.config_loader.Path")  # Outer
-    @patch("pyhatchery.components.config_loader.dotenv_values")  # Inner
+    @patch("pyhatchery.components.config_loader.Path")
+    @patch("pyhatchery.components.config_loader.dotenv_values")
     def test_load_from_env_file_not_found(
         self,
-        mock_dotenv_values_in_cl: MagicMock,  # Inner
-        mock_path_in_cl: MagicMock,  # Outer
+        mock_dotenv_values_in_cl: MagicMock,
+        mock_path_in_cl: MagicMock,
         tmp_path: Path,
     ):
         """Test when the .env file does not exist."""
         non_existent_env_file_str = str(tmp_path / "non_existent.env")
 
         mock_path_instance = MagicMock(spec=Path)
-        mock_path_instance.is_file = MagicMock(return_value=False)  # Key for this test
+        mock_path_instance.is_file = MagicMock(return_value=False)
         mock_path_in_cl.return_value = mock_path_instance
 
         result = load_from_env(non_existent_env_file_str)
@@ -146,13 +139,13 @@ class TestLoadFromEnv:
         mock_dotenv_values_in_cl.assert_not_called()
         assert result == {}
 
-    @patch("pyhatchery.components.config_loader.Path")  # Outer
-    @patch("pyhatchery.components.config_loader.dotenv_values")  # Inner
+    @patch("pyhatchery.components.config_loader.Path")
+    @patch("pyhatchery.components.config_loader.dotenv_values")
     def test_load_from_env_empty_file(
         self,
-        mock_dotenv_values_in_cl: MagicMock,  # Inner
-        mock_path_in_cl: MagicMock,  # Outer
-        temp_env_file: Callable[..., Path],  # Using the correct fixture name
+        mock_dotenv_values_in_cl: MagicMock,
+        mock_path_in_cl: MagicMock,
+        temp_env_file: Callable[..., Path],
     ):
         """Test loading from an empty .env file."""
         real_env_file_path_obj = temp_env_file(ENV_CONTENT_EMPTY)
@@ -171,12 +164,12 @@ class TestLoadFromEnv:
         mock_dotenv_values_in_cl.assert_called_once_with(dotenv_path=mock_path_instance)
         assert result == {}
 
-    @patch("pyhatchery.components.config_loader.Path")  # Outer
-    @patch("pyhatchery.components.config_loader.dotenv_values")  # Inner
+    @patch("pyhatchery.components.config_loader.Path")
+    @patch("pyhatchery.components.config_loader.dotenv_values")
     def test_load_from_env_default_path_exists(
         self,
-        mock_dotenv_values_in_cl: MagicMock,  # Inner
-        mock_path_in_cl: MagicMock,  # Outer
+        mock_dotenv_values_in_cl: MagicMock,
+        mock_path_in_cl: MagicMock,
     ):
         """Test loading from default '.env' when it exists."""
         mock_path_instance = MagicMock(spec=Path)
@@ -186,26 +179,26 @@ class TestLoadFromEnv:
         expected_vars_from_dotenv = {"DEFAULT_KEY": "DefaultValue"}
         mock_dotenv_values_in_cl.return_value = expected_vars_from_dotenv
 
-        result = load_from_env()  # Call with default path ".env"
+        result = load_from_env()
 
         mock_path_in_cl.assert_called_once_with(".env")
         mock_path_instance.is_file.assert_called_once()
         mock_dotenv_values_in_cl.assert_called_once_with(dotenv_path=mock_path_instance)
         assert result == expected_vars_from_dotenv
 
-    @patch("pyhatchery.components.config_loader.Path")  # Outer
-    @patch("pyhatchery.components.config_loader.dotenv_values")  # Inner
+    @patch("pyhatchery.components.config_loader.Path")
+    @patch("pyhatchery.components.config_loader.dotenv_values")
     def test_load_from_env_default_path_not_exists(
         self,
-        mock_dotenv_values_in_cl: MagicMock,  # Inner
-        mock_path_in_cl: MagicMock,  # Outer
+        mock_dotenv_values_in_cl: MagicMock,
+        mock_path_in_cl: MagicMock,
     ):
         """Test loading from default '.env' when it does not exist."""
         mock_path_instance = MagicMock(spec=Path)
         mock_path_instance.is_file = MagicMock(return_value=False)
         mock_path_in_cl.return_value = mock_path_instance
 
-        result = load_from_env()  # Call with default path
+        result = load_from_env()
 
         mock_path_in_cl.assert_called_once_with(".env")
         mock_path_instance.is_file.assert_called_once()

@@ -35,11 +35,14 @@ you open your fork of the project (see the `.vscode/tasks.json` file)
 
 5. **Make changes:** Implement your fix or feature.
 
-6. **Test your changes:** Run the test suite using `pytest`. You can also use the VS Code task "Run Test Suite". Tests are automatically run via GitHub Actions (`tests.yml`) when you open a pull request.
+6. **Test your changes:** Run the test suite using `pytest`. You can also use the VS Code task "Run Test Suite". Tests are automatically run via GitHub Actions (`tests.yml`) when you open a pull request. Use the Makefile to run both `pytest` and `pytest-cov`.
 
     ```bash
-    uv run pytest -v
+    make test
+    make coverage
     ```
+
+    You can also run `make coverage-html` and then examine the detailed coverage report by opening `./coverage_html/index.html` in your browser.
 
 7. **Check code style:** Ensure your code adheres to the project's style guidelines by running the linters (`ruff` and `pylint`). You can also use the VS Code task "Run Linter". Linting is automatically checked via GitHub Actions (`tests.yml`) when you open a pull request.
 
