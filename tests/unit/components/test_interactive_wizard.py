@@ -2,6 +2,7 @@
 Unit tests for the interactive_wizard component.
 """
 
+import unittest
 from unittest.mock import MagicMock, call, patch
 
 from pyhatchery.components.interactive_wizard import (
@@ -17,7 +18,7 @@ from pyhatchery.components.interactive_wizard import (
 MODULE_PATH = "pyhatchery.components.interactive_wizard"
 
 
-class TestPromptForValue:
+class TestPromptForValue(unittest.TestCase):
     """Tests for the _prompt_for_value helper function."""
 
     @patch(f"{MODULE_PATH}.input")
