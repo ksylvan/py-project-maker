@@ -3,7 +3,7 @@ Component responsible for guiding the user through an interactive wizard
 to gather project details.
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import click
 
@@ -17,7 +17,7 @@ DEFAULT_LICENSE: str = "MIT"
 
 
 def prompt_for_value(
-    prompt_message: str, default_value: Optional[str] = None, max_retries: int = 3
+    prompt_message: str, default_value: str | None = None, max_retries: int = 3
 ) -> str | None:
     """Helper function to prompt user for input with a default."""
     if default_value is not None:
@@ -74,8 +74,9 @@ def prompt_for_choice(
 
 
 def collect_project_details(
-    project_name: str, name_warnings: Optional[List[str]] = None
-) -> Optional[Dict[str, str]]:
+    project_name: str,
+    name_warnings: list[str] | None,
+) -> Dict[str, str] | None:
     """
     Collects project details from the user via an interactive wizard.
 
@@ -163,7 +164,7 @@ if __name__ == "__main__":
     click.secho(
         "\nTesting Interactive Wizard (no warnings)...", fg="magenta", bold=True
     )
-    collected_info_no_warn = collect_project_details("Another Project")
+    collected_info_no_warn = collect_project_details("Another Project", [])
     if collected_info_no_warn:
         click.secho("\nCollected Information (no warnings):", fg="magenta", bold=True)
         for key, value in collected_info_no_warn.items():

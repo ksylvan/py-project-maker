@@ -4,12 +4,12 @@ Component responsible for loading configuration from various sources.
 
 import subprocess
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict
 
 from dotenv import dotenv_values
 
 
-def get_git_config_value(key: str) -> Optional[str]:
+def get_git_config_value(key: str) -> str | None:
     """
     Retrieves a configuration value from git.
 

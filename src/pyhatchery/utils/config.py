@@ -1,20 +1,18 @@
 "Helper functions for configuration management."
 
-from typing import Optional
-
 TRUTHY_STRINGS = ["true", "1", "yes"]
 FALSY_STRINGS = ["false", "0", "no"]
 
 
-def str_to_bool(value: Optional[str]) -> bool:
+def str_to_bool(value: str | None) -> bool:
     """
     Convert a string to a boolean value based on its truthiness
 
     Args:
-        value (str): The string to convert.
+        value (str or None): to be converted.
 
     Returns:
-        bool: True if the string is 'true' (case insensitive), False otherwise.
+        bool: False if None, and True if the string is truthy, False otherwise.
     """
     if value is None:
         return False

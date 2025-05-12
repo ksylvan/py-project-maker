@@ -5,7 +5,7 @@ This module provides functions to interact with external HTTP services,
 primarily for checking package name availability on PyPI.
 """
 
-from typing import Optional, Tuple
+from typing import Tuple
 
 import click
 import requests
@@ -13,7 +13,7 @@ import requests
 PYPI_JSON_URL_TEMPLATE = "https://pypi.org/pypi/{package_name}/json"
 
 
-def check_pypi_availability(package_name: str) -> Tuple[Optional[bool], Optional[str]]:
+def check_pypi_availability(package_name: str) -> Tuple[bool | None, str | None]:
     """
     Checks if a package name is potentially taken on PyPI.
 
@@ -22,11 +22,11 @@ def check_pypi_availability(package_name: str) -> Tuple[Optional[bool], Optional
 
     Returns:
         A tuple (is_taken, error_message).
-        - is_taken (Optional[bool]):
+        - is_taken (bool | None):
             - True if the name is likely taken (HTTP 200).
             - False if the name is likely available (HTTP 404).
             - None if the check could not be completed (network error, etc).
-        - error_message (Optional[str]):
+        - error_message (str | None):
             - A string describing the error if the check failed or an issue occurred.
             - None if the check was successful (200 or 404).
     """

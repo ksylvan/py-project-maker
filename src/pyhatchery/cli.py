@@ -53,6 +53,17 @@ def _perform_project_name_checks(
             f"{python_slug_error_msg}"
         )
         warnings.append(warning_msg)
+
+    if warnings:
+        click.secho(
+            "Problems were found during project name checks. "
+            "You can choose to proceed or cancel.",
+            fg="yellow",
+            err=True,
+        )
+        for _w in warnings:
+            click.secho(f"Warning: {_w}", fg="yellow", err=True)
+
     return warnings
 
 
@@ -108,15 +119,6 @@ def _handle_new_command(
 
     # Perform additional name checks and print warnings (non-blocking)
     name_warnings = _perform_project_name_checks(project_name, pypi_slug, python_slug)
-    if name_warnings:
-        click.secho(
-            "Problems were found during project name checks. "
-            "You can choose to proceed or cancel.",
-            fg="yellow",
-            err=True,
-        )
-        for warning in name_warnings:
-            click.secho(f"Warning: {warning}", fg="yellow", err=True)
 
     # TODO: Add --no-interactive flag check here later (Story 1.3)
     # Look in ai/stories/01.03.story.md
