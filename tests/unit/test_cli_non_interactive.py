@@ -5,7 +5,10 @@ import os
 from unittest.mock import MagicMock, patch
 
 # We access a private function for testing purposes
-from pyhatchery.cli import _get_project_details_non_interactive, main
+from pyhatchery.cli import (
+    _get_project_details_non_interactive,  # pylint: disable=protected-access # type: ignore
+    main,
+)
 from pyhatchery.components.interactive_wizard import (
     DEFAULT_LICENSE,
     DEFAULT_PYTHON_VERSION,
@@ -14,6 +17,13 @@ from pyhatchery.components.interactive_wizard import (
 
 class TestNonInteractiveMode:
     """Tests for the non-interactive mode functionality."""
+
+    mock_load_env: MagicMock
+    mock_pep503_ok: MagicMock
+    mock_normalize: MagicMock
+    mock_derive_slug: MagicMock
+    mock_check_pypi: MagicMock
+    mock_is_valid: MagicMock
 
     def setup_method(self):
         """Set up common test mocks and environment."""

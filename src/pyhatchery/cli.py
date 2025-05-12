@@ -73,7 +73,7 @@ def _perform_project_name_checks(
 
 
 def _get_project_details_non_interactive(
-    args: argparse.Namespace, name_warnings: list[str], project_name: str
+    args: argparse.Namespace, name_warnings: list[str], _project_name: str
 ) -> Dict[str, str] | None:
     """
     Get project details for non-interactive mode, merging CLI args and .env values.
