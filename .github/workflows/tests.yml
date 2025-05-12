@@ -40,6 +40,8 @@ jobs:
           uv run pylint .
       - name: Run tests
         run: uv run pytest -v
+      - name: Run test coverage
+        run: make coverage
 
   check_pr_source:
     name: Check PR Source Branch

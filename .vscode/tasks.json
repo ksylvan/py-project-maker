@@ -12,7 +12,20 @@
 		{
 			"label": "Run Test Suite",
 			"type": "shell",
-			"command": "cd ${workspaceFolder} && uv run pytest -v",
+			"command": "cd ${workspaceFolder} && make test",
+			"group": {
+				"kind": "test",
+				"isDefault": true
+			},
+			"problemMatcher": ["$python"],
+			"presentation": {
+				"reveal": "always"
+			}
+		},
+		{
+			"label": "Run Test Coverage",
+			"type": "shell",
+			"command": "cd ${workspaceFolder} && make coverage",
 			"group": {
 				"kind": "test",
 				"isDefault": true
