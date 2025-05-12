@@ -236,12 +236,11 @@ def new(
     """Create a new Python project."""
     debug_flag = ctx.obj.get("DEBUG", False)
 
-    if not project_name_arg:  # Should be caught by click if argument is required
+    if not project_name_arg:
         click.secho("Error: Project name cannot be empty.", fg="red", err=True)
-        # click.echo(ctx.get_help(), err=True) # For subcommand help
-        return 1  # click handles exit code on error
+        return 1
 
-    project_name = project_name_arg  # Use a mutable variable
+    project_name = project_name_arg
 
     has_invalid, invalid_error = has_invalid_characters(project_name)
     if has_invalid:
@@ -258,15 +257,13 @@ def new(
             err=True,
         )
 
-    if project_name != pypi_slug:  # Original project_name for this comparison
+    if project_name != pypi_slug:
         click.secho(
             f"Warning: Project name '{project_name_arg}' normalized to '{pypi_slug}'.",
             fg="yellow",
             err=True,
         )
 
-    # Use the normalized pypi_slug as the basis for further operations
-    # This was an implicit behavior before, making it explicit.
     current_project_name_for_processing = pypi_slug
     python_slug = derive_python_package_slug(current_project_name_for_processing)
 
@@ -276,7 +273,7 @@ def new(
     name_warnings = _perform_project_name_checks(
         project_name_arg,
         pypi_slug,
-        python_slug,  # Pass original project_name_arg
+        python_slug,
     )
 
     project_details: Optional[Dict[str, str]] = None
@@ -299,11 +296,8 @@ def new(
     if project_details is None:
         ctx.exit(1)
 
-    # Add slugs to project_details for downstream use
-    project_details["project_name_original"] = project_name_arg  # The very first input
-    project_details["project_name_normalized"] = (
-        current_project_name_for_processing  # The one used for generation
-    )
+    project_details["project_name_original"] = project_name_arg
+    project_details["project_name_normalized"] = current_project_name_for_processing
     project_details["pypi_slug"] = pypi_slug
     project_details["python_package_slug"] = python_slug
 
@@ -311,16 +305,14 @@ def new(
         f"Creating new project: {current_project_name_for_processing}", fg="green"
     )
     if debug_flag:
-        # Ensure all relevant details are available for debugging
         debug_display_details = {
             "original_input_name": project_name_arg,
             "name_for_processing": current_project_name_for_processing,
             "pypi_slug": pypi_slug,
             "python_slug": python_slug,
-            **project_details,  # This now includes the slugs as well
+            **project_details,
         }
         click.secho(f"With details: {debug_display_details}", fg="blue")
 
-    # Placeholder for actual project generation logic
     click.secho("Project generation logic would run here.", fg="cyan")
     return 0

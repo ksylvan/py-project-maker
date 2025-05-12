@@ -82,11 +82,8 @@ class TestBasicFunctionality:
         )
 
         assert result.exit_code == 0, f"Output: {result.output}"
-        # Check for the debug output from cli.py's new command
         assert f"'name_for_processing': '{project_name}'" in result.output
-        assert (
-            "'author_name': 'Debug Author'" in result.output
-        )  # Check part of mocked details
+        assert "'author_name': 'Debug Author'" in result.output
         mock_collect_details.assert_called_once()
 
     def test_invalid_pyhatchery_debug_env_var(
@@ -94,8 +91,6 @@ class TestBasicFunctionality:
     ):
         """Test warning when PYHATCHERY_DEBUG env var is invalid."""
         monkeypatch.setenv("PYHATCHERY_DEBUG", "notabool")
-        # Mock collect_project_details to prevent interactive
-        # prompts and allow command to proceed
         with mock.patch("pyhatchery.cli.collect_project_details") as mock_collect:
             mock_collect.return_value = {
                 "author_name": "Test",
@@ -109,19 +104,12 @@ class TestBasicFunctionality:
                 pyhatchery_cli, ["new", "testenvdebug"], prog_name="pyhatchery"
             )
 
-        assert result.exit_code == 0  # Command should still succeed
+        assert result.exit_code == 0
         assert (
             "Warning: Invalid value for PYHATCHERY_DEBUG environment variable."
             in result.output
         )
-        # Also check that debug mode was NOT enabled
-        # (i.e., no debug output for project_details)
-        # This depends on the default behavior when PYHATCHERY_DEBUG is invalid.
-        # The cli.py code sets env_debug = False in this case.
-        # So, if --debug flag is not also passed, debug_flag should be False.
-        assert (
-            "With details:" not in result.output
-        )  # Assuming 'With details:' is only for debug=True
+        assert "With details:" not in result.output
 
 
 class TestNewCommand:
@@ -136,7 +124,7 @@ class TestNewCommand:
         runner: CliRunner,
     ):
         """Test `pyhatchery new <name>` in interactive mode (mocked)."""
-        mock_name_checks.return_value = []  # No name warnings
+        mock_name_checks.return_value = []
         mock_collect_details.return_value = {
             "author_name": "Test Author",
             "author_email": "test@example.com",
@@ -151,7 +139,6 @@ class TestNewCommand:
         assert result.exit_code == 0, f"Output: {result.output}"
         assert "Creating new project: my-interactive-project" in result.output
         assert "Project generation logic would run here." in result.output
-        # project_name_arg (original), pypi_slug, python_slug
         mock_name_checks.assert_called_once_with(
             project_name, "my-interactive-project", "my_interactive_project"
         )
@@ -166,8 +153,8 @@ class TestNewCommand:
         runner: CliRunner,
     ):
         """Test `pyhatchery new <name> --no-interactive` with all flags."""
-        mock_name_checks.return_value = []  # No name warnings
-        mock_load_env.return_value = {}  # No .env values
+        mock_name_checks.return_value = []
+        mock_load_env.return_value = {}
         project_name = "my_non_interactive_project"
         args = [
             "new",
@@ -191,13 +178,12 @@ class TestNewCommand:
         assert result.exit_code == 0, f"Output: {result.output}"
         assert "Creating new project: my-non-interactive-project" in result.output
         assert "Project generation logic would run here." in result.output
-        # project_name_arg (original), pypi_slug, python_slug
         mock_name_checks.assert_called_once_with(
             project_name,
             "my-non-interactive-project",
             "my_non_interactive_project",
         )
-        mock_load_env.assert_called_once()  # Check that it attempted to load .env
+        mock_load_env.assert_called_once()
 
     @mock.patch("pyhatchery.cli.load_from_env")
     @mock.patch("pyhatchery.cli._perform_project_name_checks")
@@ -215,29 +201,26 @@ class TestNewCommand:
             "GITHUB_USERNAME": "envuser",
             "PROJECT_DESCRIPTION": "Env project.",
             "LICENSE": "GPL-3.0",
-            "PYTHON_VERSION": "3.9",  # Assuming 3.9 is a valid choice for testing
+            "PYTHON_VERSION": "3.9",
         }
         project_name = "env_override_project"
         args = [
             "new",
             project_name,
             "--no-interactive",
-            "--author",  # Override author
+            "--author",
             "CLI Author",
-            "--email",  # Override email
+            "--email",
             "cli_override@example.com",
-            # Other fields will come from .env or defaults
         ]
-        result = runner.invoke(
-            pyhatchery_cli, ["--debug"] + args
-        )  # Add debug for more output
+        result = runner.invoke(pyhatchery_cli, ["--debug"] + args)
 
         assert result.exit_code == 0, f"Output: {result.output}"
         assert "Creating new project: env-override-project" in result.output
         assert "'author_name': 'CLI Author'" in result.output
         assert "'author_email': 'cli_override@example.com'" in result.output
-        assert "'github_username': 'envuser'" in result.output  # From .env
-        assert "'license': 'GPL-3.0'" in result.output  # Expect value from mocked .env
+        assert "'github_username': 'envuser'" in result.output
+        assert "'license': 'GPL-3.0'" in result.output
         mock_load_env.assert_called_once()
 
     @mock.patch("pyhatchery.cli._perform_project_name_checks")
@@ -251,7 +234,6 @@ class TestNewCommand:
             "new",
             project_name,
             "--no-interactive",
-            # Missing --author and --email
         ]
         result = runner.invoke(pyhatchery_cli, args)
 
@@ -269,14 +251,13 @@ class TestNewCommand:
         runner: CliRunner,
     ):
         """Test that project name warnings are displayed."""
-        mock_check_pypi.return_value = (True, None)  # PyPI name taken
+        mock_check_pypi.return_value = (True, None)
         mock_is_valid_python_package_name.return_value = (
             False,
             "Is not valid.",
-        )  # PEP 8 issue
+        )
 
         project_name = "WarningProject"
-        # Run in non-interactive to avoid mocking the interactive prompt for proceeding
         result = runner.invoke(
             pyhatchery_cli,
             [
@@ -290,7 +271,7 @@ class TestNewCommand:
             ],
         )
 
-        assert result.exit_code == 0  # Should still proceed after warnings
+        assert result.exit_code == 0
         assert (
             "Warning: The name 'warningproject' might already be taken on PyPI."
             in result.output
@@ -312,7 +293,7 @@ class TestNewCommand:
     ):
         """Test that PyPI check network error is handled and warning displayed."""
         mock_check_pypi.return_value = (None, "Simulated Network Error")
-        mock_is_valid_python_package_name.return_value = (True, None)  # No PEP 8 issue
+        mock_is_valid_python_package_name.return_value = (True, None)
 
         project_name = "PypiErrorProject"
         result = runner.invoke(
@@ -329,7 +310,7 @@ class TestNewCommand:
             prog_name="pyhatchery",
         )
 
-        assert result.exit_code == 0  # Should still proceed
+        assert result.exit_code == 0
         assert (
             "PyPI availability check for 'pypierrorproject' "
             "failed: Simulated Network Error" in result.output
@@ -343,13 +324,12 @@ class TestErrorConditions:
     def test_new_command_no_project_name(self, runner: CliRunner):
         """Test `pyhatchery new` without a project name."""
         result = runner.invoke(pyhatchery_cli, ["new"])
-        assert result.exit_code == 2  # Click's error code for missing argument
+        assert result.exit_code == 2
         assert "Error: Missing argument 'PROJECT_NAME'." in result.output
-        assert result.exception is not None  # Click raises MissingParameter
+        assert result.exception is not None
 
     def test_new_command_invalid_chars_in_project_name(self, runner: CliRunner):
         """Test `pyhatchery new` with invalid characters in project name."""
-        # Assuming '!' is an invalid character based on has_invalid_characters
         result = runner.invoke(pyhatchery_cli, ["new", "invalid!name"])
         assert result.exit_code == 1
         assert "Error: Project name contains invalid characters: '!'" in result.output
@@ -357,6 +337,6 @@ class TestErrorConditions:
     def test_invalid_command(self, runner: CliRunner):
         """Test an invalid command."""
         result = runner.invoke(pyhatchery_cli, ["invalidcommand"])
-        assert result.exit_code == 2  # Click's error code for no such command
+        assert result.exit_code == 2
         assert "Error: No such command 'invalidcommand'." in result.output
         assert result.exception is not None
