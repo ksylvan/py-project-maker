@@ -9,7 +9,6 @@ import click
 
 from pyhatchery.components.config_loader import get_git_config_value
 
-# Predefined choices for license and Python versions
 COMMON_LICENSES: List[str] = ["MIT", "Apache-2.0", "GPL-3.0"]
 PYTHON_VERSIONS: List[str] = ["3.10", "3.11", "3.12"]
 DEFAULT_PYTHON_VERSION: str = "3.11"
@@ -59,7 +58,7 @@ def prompt_for_choice(
             raw_selection = input(
                 f"Enter your choice (1-{len(choices)}, default is {default_choice}): "
             ).strip()
-            if not raw_selection:  # User pressed Enter, accept default
+            if not raw_selection:
                 return default_choice
             selection = int(raw_selection)
             if 1 <= selection <= len(choices):
@@ -108,9 +107,6 @@ def collect_project_details(
     details: Dict[str, str] = {}
 
     try:
-        # The default "" for the below fields can not happen, because the exception
-        # will be raised in the prompt_for_value function if the user does not provide
-        # a value and the default is None
         details["author_name"] = (
             prompt_for_value("Author Name", author_name_default) or ""
         )
@@ -146,9 +142,7 @@ def collect_project_details(
 
 
 if __name__ == "__main__":
-    # Example usage for testing the wizard directly
     click.secho("Testing Interactive Wizard...", fg="magenta", bold=True)
-    # Simulate some name warnings
     test_warnings = [
         "The name 'Test-Project' might already be taken on PyPI.",
         "Derived Python package name 'Test_Project' does not follow PEP 8.",

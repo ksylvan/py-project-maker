@@ -32,12 +32,12 @@ def check_pypi_availability(package_name: str) -> Tuple[bool | None, str | None]
     """
     url = PYPI_JSON_URL_TEMPLATE.format(package_name=package_name)
     try:
-        response = requests.get(url, timeout=10)  # 10-second timeout
+        response = requests.get(url, timeout=10)
 
         if response.status_code == 200:
-            return True, None  # Name is taken
+            return True, None
         if response.status_code == 404:
-            return False, None  # Name is available
+            return False, None
 
         response_content = response.text[:200] if response.text else "No content"
         error_msg = (
@@ -67,7 +67,6 @@ def check_pypi_availability(package_name: str) -> Tuple[bool | None, str | None]
 
 
 if __name__ == "__main__":
-    # Example usage for quick testing
     names_to_test = [
         "requests",
         "this_package_does_not_exist_and_hopefully_never_will",

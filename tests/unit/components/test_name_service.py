@@ -16,24 +16,14 @@ class TestNameService(unittest.TestCase):
     def test_pep503_normalize(self):
         """Test PEP 503 normalization for various inputs."""
         test_cases = [
-            # (input_name, expected_output)
-            ("my-project", "my-project"),  # No change needed
-            ("My_Project", "my-project"),  # Lowercase, underscore to hyphen
-            ("My.Project", "my-project"),  # Lowercase, period to hyphen
-            (
-                "My__Project..Name",
-                "my-project-name",
-            ),  # Multiple separators to single hyphen
-            (
-                "my-project",
-                "my-project",
-            ),  # No change needed (placeholder test case to match implementation)
-            (
-                "My--Project__Name",
-                "my-project-name",
-            ),  # Multiple separators of same type
-            ("123-PROJECT", "123-project"),  # Start with number, uppercase to lowercase
-            ("PROJECT", "project"),  # All uppercase to lowercase
+            ("my-project", "my-project"),
+            ("My_Project", "my-project"),
+            ("My.Project", "my-project"),
+            ("My__Project..Name", "my-project-name"),
+            ("my-project", "my-project"),
+            ("My--Project__Name", "my-project-name"),
+            ("123-PROJECT", "123-project"),
+            ("PROJECT", "project"),
         ]
 
         for input_name, expected_output in test_cases:
@@ -49,16 +39,15 @@ class TestNameService(unittest.TestCase):
     def test_derive_python_package_slug(self):
         """Test Python package slug derivation for various inputs."""
         test_cases = [
-            # (input_name, expected_output)
-            ("my_package", "my_package"),  # Already valid
-            ("My Package", "my_package"),  # Spaces to underscore
-            ("My-Hyphenated-Package", "my_hyphenated_package"),  # Hyphens to underscore
-            ("123package", "p_123package"),  # Start with digit, prepend p_
-            ("package.name", "package_name"),  # Dots to underscore
-            ("my__package", "my_package"),  # Multiple underscores to single
-            ("_package_", "package"),  # Strip leading/trailing underscores
-            ("", "default_package_name"),  # Empty string gets default
-            ("pass", "default_package_name"),  # Python keyword gets default
+            ("my_package", "my_package"),
+            ("My Package", "my_package"),
+            ("My-Hyphenated-Package", "my_hyphenated_package"),
+            ("123package", "p_123package"),
+            ("package.name", "package_name"),
+            ("my__package", "my_package"),
+            ("_package_", "package"),
+            ("", "default_package_name"),
+            ("pass", "default_package_name"),
         ]
 
         for input_name, expected_output in test_cases:
@@ -74,7 +63,6 @@ class TestNameService(unittest.TestCase):
 
     def test_is_valid_python_package_name(self):
         """Test validation of Python package names against PEP 8 conventions."""
-        # Valid names
         valid_names = [
             "package_name",
             "simple",
@@ -92,7 +80,6 @@ class TestNameService(unittest.TestCase):
                 )
                 self.assertIsNone(message)
 
-        # Invalid names
         invalid_names_with_reasons = [
             ("", "Python package slug cannot be empty."),
             ("123package", "not a valid Python identifier"),
@@ -120,7 +107,6 @@ class TestNameService(unittest.TestCase):
 
     def test_pep503_name_ok(self):
         """Test PEP 503 project name validation."""
-        # Valid names
         valid_names = [
             "package-name",
             "Package_Name",
@@ -140,16 +126,12 @@ class TestNameService(unittest.TestCase):
                 )
                 self.assertIsNone(message)
 
-        # Invalid names
         invalid_names_with_reasons = [
-            ("-package", "violates PEP 503"),  # Starts with hyphen
-            ("package-", "violates PEP 503"),  # Ends with hyphen
-            ("pack***age", "violates PEP 503"),  # Contains invalid chars
-            ("package_name_with_too_many_underscores", "too long"),  # Too long
-            (
-                "with___too___many___underscores",
-                "too many underscores",
-            ),  # Too many underscores
+            ("-package", "violates PEP 503"),
+            ("package-", "violates PEP 503"),
+            ("pack***age", "violates PEP 503"),
+            ("package_name_with_too_many_underscores", "too long"),
+            ("with___too___many___underscores", "too many underscores"),
         ]
 
         for name, reason_fragment in invalid_names_with_reasons:

@@ -24,12 +24,12 @@ def get_git_config_value(key: str) -> str | None:
             ["git", "config", "--get", key],
             capture_output=True,
             text=True,
-            check=False,  # Don't raise an exception for non-zero exit codes
+            check=False,
         )
         if process_result.returncode == 0:
             return process_result.stdout.strip()
         return None
-    except FileNotFoundError:  # git command not found
+    except FileNotFoundError:
         return None
     except (
         OSError,
@@ -53,15 +53,6 @@ def load_from_env(env_file_path: str = ".env") -> Dict[str, str]:
     """
     env_path = Path(env_file_path)
     if env_path.is_file():
-        # load_dotenv will load them into os.environ and return True if successful
-        # We want to return the dict of variables from the file itself
-        # So, we use dotenv_values which returns a dict
-        # Note: python-dotenv's dotenv_values directly returns the dict
-        # from the .env file without modifying os.environ
-        # For this to work, we need to ensure python-dotenv is installed.
-        # The PRD specifies python-dotenv as a runtime dependency.
-
         loaded_vars = dotenv_values(dotenv_path=env_path)
-        # Filter out None values to match the Dict[str, str] signature
         return {k: v for k, v in loaded_vars.items() if v is not None}
     return {}
