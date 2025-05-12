@@ -175,8 +175,16 @@ def main(argv: list[str] | None = None) -> int:
     new_parser.add_argument("project_name", help="The name of the project to create.")
 
     args = parser.parse_args(argv if argv is not None else sys.argv[1:])
-    debug_flag = str_to_bool(os.environ.get("PYHATCHERY_DEBUG", None)) or args.debug
-
+    try:
+        debug_flag = str_to_bool(os.environ.get("PYHATCHERY_DEBUG", None)) or args.debug
+    except ValueError:
+        click.secho(
+            "Warning: Invalid value for PYHATCHERY_DEBUG environment variable. "
+            "Falling back to debug mode being disabled.",
+            fg="yellow",
+            err=True,
+        )
+        debug_flag = args.debug
     if args.command == "new":
         return _handle_new_command(args, new_parser, debug_flag)
 
