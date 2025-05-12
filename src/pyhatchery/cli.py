@@ -127,12 +127,16 @@ def _get_project_details_non_interactive(
     # Merge sources with correct precedence
     for field, sources in field_sources.items():
         cli_value, env_value, default_value = sources
+        # CLI arguments take the highest precedence
         if cli_value is not None:
             details[field] = cli_value
+        # If no CLI argument is provided, use the value from the .env file
         elif env_value is not None:
             details[field] = env_value
+        # If neither CLI argument nor .env value is provided, use the default value
         elif default_value is not None:
             details[field] = default_value
+        # If all sources are missing, set the field to an empty string
         else:
             details[field] = ""
 
