@@ -92,10 +92,9 @@ def collect_project_details(
     click.secho("-" * 30, fg="blue")
 
     if name_warnings:
-        click.secho("\nProject Name Warnings:", fg="yellow", bold=True)
-        for warning in name_warnings:
-            click.secho(f"  - {warning}", fg="yellow")
-        proceed_prompt = "Proceed with this name? (yes/no, default: yes): "
+        proceed_prompt = (
+            "Ignore warnings and proceed with this name? (yes/no, default: yes): "
+        )
         proceed = input(proceed_prompt).strip().lower()
         if proceed in {"no", "n"}:
             click.secho("Exiting project generation.", fg="red")
@@ -108,16 +107,27 @@ def collect_project_details(
     details: Dict[str, str] = {}
 
     try:
-        _author, _email, _username, _desc, _license, _python_version = (
-            prompt_for_value("Author Name", author_name_default),
-            prompt_for_value("Author Email", author_email_default),
-            prompt_for_value("GitHub Username"),
-            prompt_for_value("Project Description"),
-            prompt_for_choice("Select License:", COMMON_LICENSES, DEFAULT_LICENSE),
+        # The default "" for the below fields can not happen, because the exception
+        # will be raised in the prompt_for_value function if the user does not provide
+        # a value and the default is None
+        details["author_name"] = (
+            prompt_for_value("Author Name", author_name_default) or ""
+        )
+        details["author_email"] = (
+            prompt_for_value("Author Email", author_email_default) or ""
+        )
+        details["github_username"] = prompt_for_value("GitHub Username") or ""
+        details["project_description"] = prompt_for_value("Project Description") or ""
+        details["license"] = (
+            prompt_for_choice("Select License:", COMMON_LICENSES, DEFAULT_LICENSE) or ""
+        )
+        details["python_version_preference"] = (
             prompt_for_choice(
                 "Select Python Version:", PYTHON_VERSIONS, DEFAULT_PYTHON_VERSION
-            ),
+            )
+            or ""
         )
+
     except ValueError as e:
         click.secho(f"Error: {e}", fg="red", bold=True)
         click.secho("Exiting project generation.", fg="red")
@@ -128,17 +138,6 @@ def collect_project_details(
     except EOFError:
         click.secho("\nEnd of file reached. Exiting.", fg="yellow")
         return None
-
-    # The default "" for the below fields can not happen, because the exception
-    # handling code above will have already returned None if any of the prompt_for_value
-    # calls raise a ValueError exception
-    # So we can safely assume that the user has provided valid input
-    details["author_name"] = _author or ""
-    details["author_email"] = _email or ""
-    details["github_username"] = _username or ""
-    details["project_description"] = _desc or ""
-    details["license"] = _license or ""
-    details["python_version_preference"] = _python_version or ""
 
     click.secho("-" * 30, fg="blue")
     click.secho("Project details collected.", fg="green", bold=True)

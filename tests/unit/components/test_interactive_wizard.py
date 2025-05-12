@@ -209,7 +209,7 @@ class TestCollectProjectDetails:
         assert result["author_email"] == "email@prompt.com"
         assert result["github_username"] == "gh_user_prompt"
         mock_proceed_input.assert_called_once_with(
-            "Proceed with this name? (yes/no, default: yes): "
+            "Ignore warnings and proceed with this name? (yes/no, default: yes): "
         )
 
     @patch(f"{MODULE_PATH}.input")  # For the "proceed?" prompt

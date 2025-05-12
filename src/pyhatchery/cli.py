@@ -33,7 +33,6 @@ def _perform_project_name_checks(
     is_pypi_taken, pypi_error_msg = check_pypi_availability(pypi_slug)
     if pypi_error_msg:
         msg = f"PyPI availability check for '{pypi_slug}' failed: {pypi_error_msg}"
-        click.secho(f"Warning: {msg}", fg="yellow", err=True)
         warnings.append(msg)
     elif is_pypi_taken:
         msg = (
@@ -41,7 +40,6 @@ def _perform_project_name_checks(
             "You may want to choose a different name if you plan to publish "
             "this package publicly."
         )
-        click.secho(f"Warning: {msg}", fg="yellow", err=True)
         warnings.append(msg)
 
     # Check Python package slug PEP 8 compliance
@@ -54,7 +52,6 @@ def _perform_project_name_checks(
             f"(from input '{project_name}') is not PEP 8 compliant: "
             f"{python_slug_error_msg}"
         )
-        click.secho(f"Warning: {warning_msg}", fg="yellow", err=True)
         warnings.append(warning_msg)
     return warnings
 
@@ -111,6 +108,15 @@ def _handle_new_command(
 
     # Perform additional name checks and print warnings (non-blocking)
     name_warnings = _perform_project_name_checks(project_name, pypi_slug, python_slug)
+    if name_warnings:
+        click.secho(
+            "Problems were found during project name checks. "
+            "You can choose to proceed or cancel.",
+            fg="yellow",
+            err=True,
+        )
+        for warning in name_warnings:
+            click.secho(f"Warning: {warning}", fg="yellow", err=True)
 
     # TODO: Add --no-interactive flag check here later (Story 1.3)
     # Look in ai/stories/01.03.story.md
