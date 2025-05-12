@@ -3,6 +3,7 @@ Unit tests for the config_loader component.
 """
 
 import subprocess
+import unittest
 from pathlib import Path
 from typing import Callable
 from unittest.mock import MagicMock, patch
@@ -36,7 +37,7 @@ def temp_env_file_fixture(
     return _create_env_file
 
 
-class TestGetGitConfigValue:
+class TestGetGitConfigValue(unittest.TestCase):
     """Tests for the get_git_config_value function."""
 
     @patch("subprocess.run")

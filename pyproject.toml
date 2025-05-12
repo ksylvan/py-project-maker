@@ -24,7 +24,7 @@ dependencies = ["click>=8.1.8", "python-dotenv>=1.1.0", "requests>=2.32.3"]
 "Documentation" = "https://github.com/ksylvan/pyhatchery#readme"
 
 [project.scripts]
-pyhatchery = "pyhatchery.cli:main"
+pyhatchery = "pyhatchery.cli:cli"
 
 [dependency-groups]
 dev = [

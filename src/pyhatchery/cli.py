@@ -1,9 +1,7 @@
 """Command-line interface for PyHatchery."""
 
-import argparse
 import os
-import sys
-from typing import Dict
+from typing import Dict, Optional
 
 import click
 
@@ -28,7 +26,7 @@ from .utils.config import str_to_bool
 
 
 def _perform_project_name_checks(
-    project_name: str, pypi_slug: str, python_slug: str
+    original_input_name: str, pypi_slug: str, python_slug: str
 ) -> list[str]:
     """
     Helper to perform and print warnings for project name checks.
@@ -54,7 +52,7 @@ def _perform_project_name_checks(
     if not is_python_slug_valid:
         warning_msg = (
             f"Derived Python package name '{python_slug}' "
-            f"(from input '{project_name}') is not PEP 8 compliant: "
+            f"(from input '{original_input_name}') is not PEP 8 compliant: "
             f"{python_slug_error_msg}"
         )
         warnings.append(warning_msg)
@@ -73,20 +71,31 @@ def _perform_project_name_checks(
 
 
 def _get_project_details_non_interactive(
-    args: argparse.Namespace, name_warnings: list[str], _project_name: str
+    author: Optional[str],
+    email: Optional[str],
+    github_username: Optional[str],
+    description: Optional[str],
+    license_choice: Optional[str],  # Renamed from license to avoid conflict
+    python_version: Optional[str],
+    name_warnings: list[str],
+    _project_name: str,  # Original project name for context if needed
 ) -> Dict[str, str] | None:
     """
     Get project details for non-interactive mode, merging CLI args and .env values.
 
     Args:
-        args: The command-line arguments.
+        author: Author name from CLI.
+        email: Author email from CLI.
+        github_username: GitHub username from CLI.
+        description: Project description from CLI.
+        license_choice: License choice from CLI.
+        python_version: Python version from CLI.
         name_warnings: Warnings related to the project name.
-        project_name: The validated project name.
+        _project_name: The validated project name.
 
     Returns:
         A dictionary containing project details, or None if required fields are missing.
     """
-    # Display warnings but don't prompt for re-entry in non-interactive mode
     if name_warnings:
         click.secho(
             "Warnings were found during project name checks (non-interactive mode):",
@@ -96,54 +105,44 @@ def _get_project_details_non_interactive(
         for warning in name_warnings:
             click.secho(f"Warning: {warning}", fg="yellow", err=True)
 
-    # Load from .env file if it exists
     env_values = load_from_env()
-
-    # Merge sources with correct precedence: CLI args > .env > defaults
     details: Dict[str, str] = {}
 
-    # Define required fields and their sources
-    field_sources: Dict[str, tuple[str | None, str | None, str | None]] = {
-        "author_name": (args.author, env_values.get("AUTHOR_NAME"), None),
-        "author_email": (args.email, env_values.get("AUTHOR_EMAIL"), None),
+    field_sources: Dict[str, tuple[Optional[str], Optional[str], Optional[str]]] = {
+        "author_name": (author, env_values.get("AUTHOR_NAME"), None),
+        "author_email": (email, env_values.get("AUTHOR_EMAIL"), None),
         "github_username": (
-            args.github_username,
+            github_username,
             env_values.get("GITHUB_USERNAME"),
             None,
         ),
         "project_description": (
-            args.description,
+            description,
             env_values.get("PROJECT_DESCRIPTION"),
             None,
         ),
-        "license": (args.license, env_values.get("LICENSE"), DEFAULT_LICENSE),
+        "license": (license_choice, env_values.get("LICENSE"), DEFAULT_LICENSE),
         "python_version_preference": (
-            args.python_version,
+            python_version,
             env_values.get("PYTHON_VERSION"),
             DEFAULT_PYTHON_VERSION,
         ),
     }
 
-    # Merge sources with correct precedence
     for field, sources in field_sources.items():
-        cli_value, env_value, default_value = sources
-        # CLI arguments take the highest precedence
-        if cli_value is not None:
-            details[field] = cli_value
-        # If no CLI argument is provided, use the value from the .env file
-        elif env_value is not None:
-            details[field] = env_value
-        # If neither CLI argument nor .env value is provided, use the default value
-        elif default_value is not None:
-            details[field] = default_value
-        # If all sources are missing, set the field to an empty string
+        cli_val, env_val, default_val = sources
+        if cli_val is not None:
+            details[field] = cli_val
+        elif env_val is not None:
+            details[field] = env_val
+        elif default_val is not None:
+            details[field] = default_val
         else:
-            details[field] = ""
+            details[field] = ""  # Ensure key exists even if empty
 
-    # Check for missing required fields (author_name and author_email are required)
     missing_fields: list[str] = []
     for field in ["author_name", "author_email"]:
-        if not details[field]:
+        if not details.get(field):  # Use .get() for safety
             missing_fields.append(field)
 
     if missing_fields:
@@ -170,21 +169,83 @@ internal_get_project_details_non_interactive_for_testing = (
 )
 
 
-def _handle_new_command(
-    args: argparse.Namespace, new_parser: argparse.ArgumentParser, debug_flag: bool
-) -> int:
-    """Handles the 'new' command logic."""
-    if not args.project_name:
+@click.group(context_settings={"help_option_names": ["-h", "--help"]})
+@click.version_option(
+    __version__,
+    "-v",
+    "--version",
+    prog_name="pyhatchery",
+    message="%(prog)s %(version)s",
+)
+@click.option("--debug", is_flag=True, help="Enable debug mode.")
+@click.pass_context
+def cli(ctx: click.Context, debug: bool):
+    """PyHatchery: A Python project scaffolding tool."""
+    try:
+        env_debug = str_to_bool(os.environ.get("PYHATCHERY_DEBUG", "false"))
+    except ValueError:
+        click.secho(
+            "Warning: Invalid value for PYHATCHERY_DEBUG environment variable. "
+            "Falling back to debug mode being disabled.",
+            fg="yellow",
+            err=True,
+        )
+        env_debug = False
+    ctx.obj = {"DEBUG": debug or env_debug}
+
+
+@cli.command("new")
+@click.argument("project_name_arg", metavar="PROJECT_NAME")
+@click.option(
+    "--no-interactive",
+    is_flag=True,
+    help="Use non-interactive mode (all details provided via flags or .env file).",
+)
+@click.option("--author", help="Author name for the project.")
+@click.option("--email", help="Author email for the project.")
+@click.option("--github-username", help="GitHub username for the project.")
+@click.option("--description", help="Description of the project.")
+@click.option(
+    "--license",
+    "license_choice",  # Use a different dest name
+    type=click.Choice(COMMON_LICENSES),
+    default=None,
+    help=f"License for the project. Choices: {', '.join(COMMON_LICENSES)}.",
+    show_default=f"Defaults to {DEFAULT_LICENSE} if not specified in .env or CLI.",
+)
+@click.option(
+    "--python-version",
+    type=click.Choice(PYTHON_VERSIONS),
+    default=None,
+    help=f"Python version for the project. Choices: {', '.join(PYTHON_VERSIONS)}.",
+    show_default=f"Defaults to {DEFAULT_PYTHON_VERSION} "
+    "if not specified in .env or CLI.",
+)
+@click.pass_context
+def new(
+    ctx: click.Context,
+    project_name_arg: str,
+    no_interactive: bool,
+    author: Optional[str],
+    email: Optional[str],
+    github_username: Optional[str],
+    description: Optional[str],
+    license_choice: Optional[str],
+    python_version: Optional[str],
+):
+    """Create a new Python project."""
+    debug_flag = ctx.obj.get("DEBUG", False)
+
+    if not project_name_arg:
         click.secho("Error: Project name cannot be empty.", fg="red", err=True)
-        new_parser.print_help(sys.stderr)
         return 1
 
-    project_name = args.project_name
+    project_name = project_name_arg
 
     has_invalid, invalid_error = has_invalid_characters(project_name)
     if has_invalid:
         click.secho(f"Error: {invalid_error}", fg="red", err=True)
-        return 1
+        ctx.exit(1)
 
     pypi_slug = pep503_normalize(project_name)
 
@@ -198,129 +259,60 @@ def _handle_new_command(
 
     if project_name != pypi_slug:
         click.secho(
-            f"Warning: Project name '{project_name}' normalized to '{pypi_slug}'.",
+            f"Warning: Project name '{project_name_arg}' normalized to '{pypi_slug}'.",
             fg="yellow",
             err=True,
         )
 
-    project_name = pypi_slug
-    python_slug = derive_python_package_slug(project_name)
+    current_project_name_for_processing = pypi_slug
+    python_slug = derive_python_package_slug(current_project_name_for_processing)
 
     click.secho(f"Derived PyPI slug: {pypi_slug}", fg="blue", err=True)
     click.secho(f"Derived Python package slug: {python_slug}", fg="blue", err=True)
 
-    name_warnings = _perform_project_name_checks(project_name, pypi_slug, python_slug)
+    name_warnings = _perform_project_name_checks(
+        project_name_arg,
+        pypi_slug,
+        python_slug,
+    )
 
-    # Handle interactive vs. non-interactive mode
-    if args.no_interactive:
+    project_details: Optional[Dict[str, str]] = None
+    if no_interactive:
         project_details = _get_project_details_non_interactive(
-            args, name_warnings, project_name
+            author,
+            email,
+            github_username,
+            description,
+            license_choice,
+            python_version,
+            name_warnings,
+            current_project_name_for_processing,
         )
     else:
-        project_details = collect_project_details(project_name, name_warnings)
+        project_details = collect_project_details(
+            current_project_name_for_processing, name_warnings
+        )
 
     if project_details is None:
-        return 1
+        ctx.exit(1)
 
-    click.secho(f"Creating new project: {project_name}", fg="green")
+    project_details["project_name_original"] = project_name_arg
+    project_details["project_name_normalized"] = current_project_name_for_processing
+    project_details["pypi_slug"] = pypi_slug
+    project_details["python_package_slug"] = python_slug
+
+    click.secho(
+        f"Creating new project: {current_project_name_for_processing}", fg="green"
+    )
     if debug_flag:
-        click.secho(f"With details: {project_details}", fg="blue")
+        debug_display_details = {
+            "original_input_name": project_name_arg,
+            "name_for_processing": current_project_name_for_processing,
+            "pypi_slug": pypi_slug,
+            "python_slug": python_slug,
+            **project_details,
+        }
+        click.secho(f"With details: {debug_display_details}", fg="blue")
 
+    click.secho("Project generation logic would run here.", fg="cyan")
     return 0
-
-
-def main(argv: list[str] | None = None) -> int:
-    """
-    Main entry point for the PyHatchery CLI.
-
-    Args:
-        argv: Command-line arguments. Defaults to None,
-              which means sys.argv[1:] will be used.
-
-    Returns:
-        Exit code for the process.
-    """
-    parser = argparse.ArgumentParser(
-        prog="pyhatchery",
-        description="PyHatchery: A Python project scaffolding tool.",
-    )
-    parser.add_argument(
-        "--version",
-        "-v",
-        action="version",
-        version=f"pyhatchery {__version__}",
-        help="Show the version and exit.",
-    )
-    parser.add_argument(
-        "--debug",
-        action="store_true",
-        help="Enable debug mode.",
-    )
-    subparsers = parser.add_subparsers(
-        dest="command", title="Commands", help="Available commands"
-    )
-
-    # Configure the 'new' command with additional flags for non-interactive mode
-    new_parser = subparsers.add_parser(
-        "new",
-        help="Create a new Python project.",
-        usage="pyhatchery new [-h] project_name",
-    )
-    new_parser.add_argument("project_name", help="The name of the project to create.")
-    new_parser.add_argument(
-        "--no-interactive",
-        action="store_true",
-        help="Use non-interactive mode (all details provided via flags or .env file).",
-    )
-    new_parser.add_argument(
-        "--author",
-        help="Author name for the project.",
-    )
-    new_parser.add_argument(
-        "--email",
-        help="Author email for the project.",
-    )
-    new_parser.add_argument(
-        "--github-username",
-        help="GitHub username for the project.",
-    )
-    new_parser.add_argument(
-        "--description",
-        help="Description of the project.",
-    )
-    new_parser.add_argument(
-        "--license",
-        choices=COMMON_LICENSES,
-        default=None,  # So it can be differentiated from not provided
-        help=f"License for the project. Choices: {', '.join(COMMON_LICENSES)}.",
-    )
-    new_parser.add_argument(
-        "--python-version",
-        choices=PYTHON_VERSIONS,
-        default=None,  # So it can be differentiated from not provided
-        help=f"Python version for the project. Choices: {', '.join(PYTHON_VERSIONS)}.",
-    )
-
-    args = parser.parse_args(argv if argv is not None else sys.argv[1:])
-    try:
-        debug_flag = str_to_bool(os.environ.get("PYHATCHERY_DEBUG", None)) or args.debug
-    except ValueError:
-        click.secho(
-            "Warning: Invalid value for PYHATCHERY_DEBUG environment variable. "
-            "Falling back to debug mode being disabled.",
-            fg="yellow",
-            err=True,
-        )
-        debug_flag = args.debug
-    if args.command == "new":
-        return _handle_new_command(args, new_parser, debug_flag)
-
-    if args.command is None:
-        parser.print_help(sys.stderr)
-        return 1
-
-    return 1
-
-
-if __name__ == "__main__":
-    sys.exit(main())
