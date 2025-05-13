@@ -237,7 +237,7 @@ class ProjectNameDetails:
 
 def _process_project_name(
     project_name_arg: str, ctx: click.Context
-) -> ProjectNameDetails | None:
+) -> ProjectNameDetails:
     """Validate and derive all project name variants and warnings."""
     if not project_name_arg:
         click.secho("Error: Project name cannot be empty.", fg="red", err=True)
@@ -328,9 +328,9 @@ def new(
     )
     debug_flag = ctx.obj.get("DEBUG", False)
 
+    # _process_project_name will call ctx.exit() if the input is invalid,
+    # so name_data will never be None if execution continues.
     name_data = _process_project_name(project_name_arg, ctx)
-    if name_data is None:
-        return 1
 
     project_details: dict[str, str] | None
     if cmd_options.no_interactive:
