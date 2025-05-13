@@ -130,7 +130,7 @@ class TestCliEndToEnd:
             "Creating new project: test-project-e2e-minimal"
             in result.stdout  # Expect pypi_slug
         )
-        assert "Project generation logic would run here." in result.stdout
+        assert "Project directory structure created at:" in result.stdout
         # Further checks could involve verifying that no interactive prompts appeared.
 
     def test_new_command_non_interactive_all_flags(self, tmp_path: Path):
@@ -159,7 +159,7 @@ class TestCliEndToEnd:
             f"stdout: {result.stdout}\nstderr: {result.stderr}"
         )
         assert f"Creating new project: {pypi_slug}" in result.stdout
-        assert "Project generation logic would run here." in result.stdout
+        assert "Project directory structure created at:" in result.stdout
         # Debug specific assertions removed for focus, covered by unit tests
         # assert (
         #     f"'original_input_name': '{project_name}'" in result.stdout
