@@ -352,7 +352,6 @@ def new(
 
     if project_details is None:
         ctx.exit(1)
-        return 1
 
     project_details["project_name_original"] = name_data.original_arg
     project_details["project_name_normalized"] = name_data.pypi_slug
