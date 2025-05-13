@@ -29,6 +29,15 @@ from .utils.config import str_to_bool
 
 
 @dataclass
+class ProjectAuthorDetails:
+    """Holds author details for a project."""
+
+    name: str | None = None
+    email: str | None = None
+    github_username: str | None = None
+
+
+@dataclass
 class ProjectNameDetails:
     """Holds all derived names and warnings for a project."""
 
@@ -43,9 +52,7 @@ class ProjectOptions:
     """Options for project creation."""
 
     no_interactive: bool = False
-    author: str | None = None
-    email: str | None = None
-    github_username: str | None = None
+    author: ProjectAuthorDetails = field(default_factory=ProjectAuthorDetails)
     description: str | None = None
     license_choice: str | None = None
     python_version: str | None = None
@@ -167,9 +174,9 @@ def get_non_interactive_details(options: ProjectOptions) -> dict[str, str] | Non
 
     # Define fields with their sources (CLI, env, default)
     field_map: dict[str, tuple[str | None, str, str | None]] = {
-        "author_name": (options.author, "AUTHOR_NAME", None),
-        "author_email": (options.email, "AUTHOR_EMAIL", None),
-        "github_username": (options.github_username, "GITHUB_USERNAME", None),
+        "author_name": (options.author.name, "AUTHOR_NAME", None),
+        "author_email": (options.author.email, "AUTHOR_EMAIL", None),
+        "github_username": (options.author.github_username, "GITHUB_USERNAME", None),
         "project_description": (options.description, "PROJECT_DESCRIPTION", None),
         "license": (options.license_choice, "LICENSE", DEFAULT_LICENSE),
         "python_version_preference": (
@@ -309,12 +316,17 @@ def cli(ctx: click.Context, debug: bool):
 @click.pass_context
 def new(ctx: click.Context, project_name_arg: str, **kwargs: Any) -> int:
     """Create a new Python project."""
+    # Create author details from kwargs
+    author_details = ProjectAuthorDetails(
+        name=cast(str | None, kwargs.get("author")),
+        email=cast(str | None, kwargs.get("email")),
+        github_username=cast(str | None, kwargs.get("github_username")),
+    )
+
     # Create options object from kwargs
     options = ProjectOptions(
         no_interactive=cast(bool, kwargs.get("no_interactive", False)),
-        author=cast(str | None, kwargs.get("author")),
-        email=cast(str | None, kwargs.get("email")),
-        github_username=cast(str | None, kwargs.get("github_username")),
+        author=author_details,
         description=cast(str | None, kwargs.get("description")),
         license_choice=cast(str | None, kwargs.get("license_choice")),
         python_version=cast(str | None, kwargs.get("python_version")),
