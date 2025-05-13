@@ -1,6 +1,7 @@
 """Unit tests for the project generator component."""
 
-from unittest.mock import patch
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -10,7 +11,7 @@ from pyhatchery.components.project_generator import create_base_structure
 class TestCreateBaseStructure:
     """Tests for the create_base_structure function."""
 
-    def test_creates_correct_directory_structure(self, tmp_path):
+    def test_creates_correct_directory_structure(self, tmp_path: Path):
         """Test that the function creates the correct directory structure."""
         # Arrange
         output_path = tmp_path
@@ -29,7 +30,7 @@ class TestCreateBaseStructure:
         assert (output_path / project_name / "tests").exists()
         assert (output_path / project_name / "docs").exists()
 
-    def test_raises_error_if_directory_exists_and_not_empty(self, tmp_path):
+    def test_raises_error_if_directory_exists_and_not_empty(self, tmp_path: Path):
         """Test error when directory exists and is not empty."""
         # Arrange
         output_path = tmp_path
@@ -45,7 +46,7 @@ class TestCreateBaseStructure:
         with pytest.raises(FileExistsError):
             create_base_structure(output_path, project_name, python_package_slug)
 
-    def test_handles_empty_existing_directory(self, tmp_path):
+    def test_handles_empty_existing_directory(self, tmp_path: Path):
         """Test that the function handles an empty existing directory."""
         # Arrange
         output_path = tmp_path
@@ -68,7 +69,7 @@ class TestCreateBaseStructure:
         assert (output_path / project_name / "docs").exists()
 
     @patch("pathlib.Path.mkdir")
-    def test_handles_os_error(self, mock_mkdir, tmp_path):
+    def test_handles_os_error(self, mock_mkdir: MagicMock, tmp_path: Path):
         """Test that the function handles OSError correctly."""
         # Arrange
         output_path = tmp_path
