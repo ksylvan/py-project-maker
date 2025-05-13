@@ -3,6 +3,7 @@ Unit tests for the PyHatchery CLI (Click version).
 These tests use click.testing.CliRunner.
 """
 
+from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -65,8 +66,14 @@ class TestBasicFunctionality:
         assert "Create a new Python project." in result.output
         assert result.exception is None
 
+    @mock.patch("pyhatchery.cli.create_base_structure")
     @mock.patch("pyhatchery.cli.collect_project_details")
-    def test_debug_flag(self, mock_collect_details: mock.MagicMock, runner: CliRunner):
+    def test_debug_flag(
+        self,
+        mock_collect_details: mock.MagicMock,
+        mock_create_structure: mock.MagicMock,
+        runner: CliRunner,
+    ):
         """Test the --debug flag sets context and is used by subcommands."""
         mock_collect_details.return_value = {
             "author_name": "Debug Author",
@@ -76,6 +83,7 @@ class TestBasicFunctionality:
             "license": "MIT",
             "python_version_preference": "3.11",
         }
+        mock_create_structure.return_value = Path("/fake/path/testdebug")
         project_name = "testdebug"
         result = runner.invoke(
             pyhatchery_cli, ["--debug", "new", project_name], prog_name="pyhatchery"
@@ -100,9 +108,11 @@ class TestBasicFunctionality:
                 "github_username": "",
                 "project_description": "",
             }
-            result = runner.invoke(
-                pyhatchery_cli, ["new", "testenvdebug"], prog_name="pyhatchery"
-            )
+            with mock.patch("pyhatchery.cli.create_base_structure") as mock_create:
+                mock_create.return_value = Path("/fake/path/testenvdebug")
+                result = runner.invoke(
+                    pyhatchery_cli, ["new", "testenvdebug"], prog_name="pyhatchery"
+                )
 
         assert result.exit_code == 0
         assert (
@@ -115,12 +125,14 @@ class TestBasicFunctionality:
 class TestNewCommand:
     """Tests for the 'new' command logic."""
 
+    @mock.patch("pyhatchery.cli.create_base_structure")
     @mock.patch("pyhatchery.cli.collect_project_details")
     @mock.patch("pyhatchery.cli._perform_project_name_checks")
     def test_new_interactive_mode_success(
         self,
         mock_name_checks: mock.MagicMock,
         mock_collect_details: mock.MagicMock,
+        mock_create_structure: mock.MagicMock,
         runner: CliRunner,
     ):
         """Test `pyhatchery new <name>` in interactive mode (mocked)."""
@@ -133,28 +145,34 @@ class TestNewCommand:
             "license": "MIT",
             "python_version_preference": "3.11",
         }
+        mock_create_structure.return_value = Path("/fake/path/my_interactive_project")
         project_name = "my_interactive_project"
         result = runner.invoke(pyhatchery_cli, ["new", project_name])
 
         assert result.exit_code == 0, f"Output: {result.output}"
         assert "Creating new project: my-interactive-project" in result.output
-        assert "Project generation logic would run here." in result.output
+        assert "Project directory structure created at:" in result.output
         mock_name_checks.assert_called_once_with(
             project_name, "my-interactive-project", "my_interactive_project"
         )
         mock_collect_details.assert_called_once_with("my-interactive-project", [])
 
+    @mock.patch("pyhatchery.cli.create_base_structure")
     @mock.patch("pyhatchery.cli.load_from_env")
     @mock.patch("pyhatchery.cli._perform_project_name_checks")
     def test_new_non_interactive_mode_all_flags(
         self,
         mock_name_checks: mock.MagicMock,
         mock_load_env: mock.MagicMock,
+        mock_create_structure: mock.MagicMock,
         runner: CliRunner,
     ):
         """Test `pyhatchery new <name> --no-interactive` with all flags."""
         mock_name_checks.return_value = []
         mock_load_env.return_value = {}
+        mock_create_structure.return_value = Path(
+            "/fake/path/my_non_interactive_project"
+        )
         project_name = "my_non_interactive_project"
         args = [
             "new",
@@ -177,7 +195,7 @@ class TestNewCommand:
 
         assert result.exit_code == 0, f"Output: {result.output}"
         assert "Creating new project: my-non-interactive-project" in result.output
-        assert "Project generation logic would run here." in result.output
+        assert "Project directory structure created at:" in result.output
         mock_name_checks.assert_called_once_with(
             project_name,
             "my-non-interactive-project",
@@ -185,12 +203,14 @@ class TestNewCommand:
         )
         mock_load_env.assert_called_once()
 
+    @mock.patch("pyhatchery.cli.create_base_structure")
     @mock.patch("pyhatchery.cli.load_from_env")
     @mock.patch("pyhatchery.cli._perform_project_name_checks")
     def test_new_non_interactive_mode_env_override(
         self,
         mock_name_checks: mock.MagicMock,
         mock_load_env: mock.MagicMock,
+        mock_create_structure: mock.MagicMock,
         runner: CliRunner,
     ):
         """Test CLI flags override .env values in non-interactive mode."""
@@ -203,6 +223,7 @@ class TestNewCommand:
             "LICENSE": "GPL-3.0",
             "PYTHON_VERSION": "3.9",
         }
+        mock_create_structure.return_value = Path("/fake/path/env_override_project")
         project_name = "env_override_project"
         args = [
             "new",
@@ -242,12 +263,14 @@ class TestNewCommand:
         assert "- author_name" in result.output
         assert "- author_email" in result.output
 
+    @mock.patch("pyhatchery.cli.create_base_structure")
     @mock.patch("pyhatchery.cli.check_pypi_availability")
     @mock.patch("pyhatchery.cli.is_valid_python_package_name")
     def test_new_command_name_warnings_displayed(
         self,
         mock_is_valid_python_package_name: mock.MagicMock,
         mock_check_pypi: mock.MagicMock,
+        mock_create_structure: mock.MagicMock,
         runner: CliRunner,
     ):
         """Test that project name warnings are displayed."""
@@ -256,6 +279,7 @@ class TestNewCommand:
             False,
             "Is not valid.",
         )
+        mock_create_structure.return_value = Path("/fake/path/WarningProject")
 
         project_name = "WarningProject"
         result = runner.invoke(
@@ -283,17 +307,20 @@ class TestNewCommand:
         )
         assert "Creating new project: warningproject" in result.output
 
+    @mock.patch("pyhatchery.cli.create_base_structure")
     @mock.patch("pyhatchery.cli.check_pypi_availability")
     @mock.patch("pyhatchery.cli.is_valid_python_package_name")
     def test_new_command_pypi_check_network_error(
         self,
         mock_is_valid_python_package_name: mock.MagicMock,
         mock_check_pypi: mock.MagicMock,
+        mock_create_structure: mock.MagicMock,
         runner: CliRunner,
     ):
         """Test that PyPI check network error is handled and warning displayed."""
         mock_check_pypi.return_value = (None, "Simulated Network Error")
         mock_is_valid_python_package_name.return_value = (True, None)
+        mock_create_structure.return_value = Path("/fake/path/PypiErrorProject")
 
         project_name = "PypiErrorProject"
         result = runner.invoke(

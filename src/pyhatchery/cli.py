@@ -1,6 +1,7 @@
 """Command-line interface for PyHatchery."""
 
 import os
+from pathlib import Path
 
 import click
 
@@ -21,6 +22,7 @@ from .components.name_service import (
     pep503_name_ok,
     pep503_normalize,
 )
+from .components.project_generator import create_base_structure
 from .utils.config import str_to_bool
 
 
@@ -313,5 +315,24 @@ def new(
         }
         click.secho(f"With details: {debug_display_details}", fg="blue")
 
-    click.secho("Project generation logic would run here.", fg="cyan")
+    try:
+        # Create the project directory structure
+        output_path = Path.cwd()  # For now, use current directory as output path
+        project_root = create_base_structure(
+            output_path,
+            project_details["project_name_original"],
+            project_details["python_package_slug"],
+        )
+        click.secho(
+            f"Project directory structure created at: {project_root}", fg="green"
+        )
+    except FileExistsError as e:
+        click.secho(f"Error: {str(e)}", fg="red", err=True)
+        ctx.exit(1)
+    except OSError as e:
+        click.secho(
+            f"Error creating project directory structure: {str(e)}", fg="red", err=True
+        )
+        ctx.exit(1)
+
     return 0
