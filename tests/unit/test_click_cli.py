@@ -174,6 +174,8 @@ class TestNewCommand:
             "/fake/path/my_non_interactive_project"
         )
         project_name = "my_non_interactive_project"
+        # We're not using the helper function here since this test needs specific
+        # values that differ from the helper defaults
         args = [
             "new",
             project_name,

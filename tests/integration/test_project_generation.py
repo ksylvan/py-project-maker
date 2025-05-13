@@ -4,23 +4,15 @@ These tests verify that the directory structure is created correctly.
 """
 
 import shutil
-import subprocess
-import sys
 from collections.abc import Generator
 from pathlib import Path
 
 import pytest
 
-# Import the helper function directly
-PYHATCHERY_CMD = [sys.executable, "-m", "pyhatchery"]
-
-
-def run_pyhatchery_command(
-    args: list[str], cwd: Path | None = None
-) -> subprocess.CompletedProcess[str]:
-    """Helper function to run pyhatchery CLI commands."""
-    command = PYHATCHERY_CMD + args
-    return subprocess.run(command, capture_output=True, text=True, check=False, cwd=cwd)
+from tests.helpers import (
+    get_minimal_non_interactive_args,
+    run_pyhatchery_command,
+)
 
 
 def _rmdir(path: Path) -> None:
@@ -62,19 +54,7 @@ class TestProjectGeneration:
         python_package_slug = project_name_to_create.lower()
 
         # Act
-        args = [
-            "new",
-            project_name_to_create,
-            "--no-interactive",
-            "--author",
-            "Test Author",
-            "--email",
-            "test@example.com",
-            "--license",
-            "MIT",
-            "--python-version",
-            "3.11",
-        ]
+        args = get_minimal_non_interactive_args(project_name_to_create)
         # Run the command in the parent of managed_project_dir (i.e., tmp_path).
         # The 'new' command is expected to create the 'managed_project_dir' itself.
         result = run_pyhatchery_command(args, cwd=managed_project_dir.parent)
@@ -108,19 +88,7 @@ class TestProjectGeneration:
         (project_dir / "some_file.txt").write_text("content")
 
         # Act
-        args = [
-            "new",
-            project_name,
-            "--no-interactive",
-            "--author",
-            "Test Author",
-            "--email",
-            "test@example.com",
-            "--license",
-            "MIT",
-            "--python-version",
-            "3.11",
-        ]
+        args = get_minimal_non_interactive_args(project_name)
         result = run_pyhatchery_command(args, cwd=tmp_path)
 
         # Assert

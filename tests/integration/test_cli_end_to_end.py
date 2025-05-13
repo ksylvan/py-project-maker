@@ -3,27 +3,16 @@ End-to-end tests for the PyHatchery CLI.
 These tests invoke the CLI as a subprocess.
 """
 
-import subprocess
-import sys
 from pathlib import Path
 
 import pytest
 
 from pyhatchery import __version__
-
-# Helper to get the pyhatchery executable
-# This might need adjustment based on how the project is structured
-# and how it's intended to be run during tests
-# (e.g., via `python -m pyhatchery` or a script)
-PYHATCHERY_CMD = [sys.executable, "-m", "pyhatchery"]
-
-
-def run_pyhatchery_command(
-    args: list[str], cwd: Path | None = None
-) -> subprocess.CompletedProcess[str]:
-    """Helper function to run pyhatchery CLI commands."""
-    command = PYHATCHERY_CMD + args
-    return subprocess.run(command, capture_output=True, text=True, check=False, cwd=cwd)
+from tests.helpers import (
+    get_full_non_interactive_args,
+    get_minimal_non_interactive_args,
+    run_pyhatchery_command,
+)
 
 
 class TestCliEndToEnd:
@@ -100,24 +89,8 @@ class TestCliEndToEnd:
         without extensive mocking or actual generation.
         """
         project_name = "test_project_e2e_minimal"
-        # Assuming author and email are the minimal required for non-interactive
-        # and other components (like PyPI check) are mocked or handled gracefully.
-        # For this E2E, we're mostly checking CLI parsing and initial flow.
-        args = [
-            "new",
-            project_name,
-            "--no-interactive",
-            "--author",
-            "Test Author",
-            "--email",
-            "test@example.com",
-            # Add other necessary defaults if the CLI requires them
-            # to pass initial validation
-            "--license",
-            "MIT",
-            "--python-version",
-            "3.11",
-        ]
+        # Get the minimal set of non-interactive arguments
+        args = get_minimal_non_interactive_args(project_name)
         result = run_pyhatchery_command(args, cwd=tmp_path)
 
         # Check for successful start of the process (exit code 0)
@@ -137,23 +110,7 @@ class TestCliEndToEnd:
         """Test `pyhatchery new <name> --no-interactive` with all flags."""
         project_name = "test_project_e2e_full"
         pypi_slug = "test-project-e2e-full"  # Expected normalization
-        args = [
-            "new",
-            project_name,
-            "--no-interactive",
-            "--author",
-            "Full Test Author",
-            "--email",
-            "full_test@example.com",
-            "--github-username",
-            "fulltester",
-            "--description",
-            "A full test project.",
-            "--license",
-            "Apache-2.0",
-            "--python-version",
-            "3.10",
-        ]
+        args = get_full_non_interactive_args(project_name)
         result = run_pyhatchery_command(args, cwd=tmp_path)
         assert result.returncode == 0, (
             f"stdout: {result.stdout}\nstderr: {result.stderr}"
@@ -196,15 +153,11 @@ class TestCliEndToEnd:
         # it will try to run. We check for output indicating it passed name checks,
         # implying interactive mode started.
 
+        # For this E2E, if it fails due to prompt EOF, that's an indication
+        # it tried interactive.
         args = ["new", project_name]
         result = run_pyhatchery_command(args, cwd=tmp_path)
 
-        # If it tries to run interactively and we don't provide input,
-        # it might hang or error. The current cli.py mock for generation
-        # means it will print "Project generation logic would run here."
-        # if collect_project_details returns successfully.
-        # For this E2E, if it fails due to prompt EOF, that's an indication
-        # it tried interactive.
         # The actual output shows "End of file reached. Exiting." and return code 1.
         assert result.returncode == 1, (  # Expecting failure due to EOF on prompt
             f"stdout: {result.stdout}\nstderr: {result.stderr}"
