@@ -129,7 +129,7 @@ def pep503_name_ok(project_name: str) -> tuple[bool, str | None]:
     return True, None
 
 
-def has_invalid_characters(name: str) -> tuple[bool, str | None]:
+def has_invalid_characters(name: str) -> tuple[bool, str]:
     """
     Check if the project name contains characters that are not allowed.
     This is a stricter check than PEP503 normalization, which simply
@@ -154,4 +154,4 @@ def has_invalid_characters(name: str) -> tuple[bool, str | None]:
         chars_str = ", ".join([f"'{c}'" for c in found_invalid])
         return True, f"Project name contains invalid characters: {chars_str}"
 
-    return False, None
+    return False, ""

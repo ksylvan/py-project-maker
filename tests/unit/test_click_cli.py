@@ -127,7 +127,7 @@ class TestNewCommand:
 
     @mock.patch("pyhatchery.cli.create_base_structure")
     @mock.patch("pyhatchery.cli.collect_project_details")
-    @mock.patch("pyhatchery.cli._perform_project_name_checks")
+    @mock.patch("pyhatchery.cli.check_name_validity")
     def test_new_interactive_mode_success(
         self,
         mock_name_checks: mock.MagicMock,
@@ -159,7 +159,7 @@ class TestNewCommand:
 
     @mock.patch("pyhatchery.cli.create_base_structure")
     @mock.patch("pyhatchery.cli.load_from_env")
-    @mock.patch("pyhatchery.cli._perform_project_name_checks")
+    @mock.patch("pyhatchery.cli.check_name_validity")
     def test_new_non_interactive_mode_all_flags(
         self,
         mock_name_checks: mock.MagicMock,
@@ -207,7 +207,7 @@ class TestNewCommand:
 
     @mock.patch("pyhatchery.cli.create_base_structure")
     @mock.patch("pyhatchery.cli.load_from_env")
-    @mock.patch("pyhatchery.cli._perform_project_name_checks")
+    @mock.patch("pyhatchery.cli.check_name_validity")
     def test_new_non_interactive_mode_env_override(
         self,
         mock_name_checks: mock.MagicMock,
@@ -246,7 +246,7 @@ class TestNewCommand:
         assert "'license': 'GPL-3.0'" in result.output
         mock_load_env.assert_called_once()
 
-    @mock.patch("pyhatchery.cli._perform_project_name_checks")
+    @mock.patch("pyhatchery.cli.check_name_validity")
     def test_new_non_interactive_mode_missing_required_flags(
         self, mock_name_checks: mock.MagicMock, runner: CliRunner
     ):

@@ -5,10 +5,13 @@ This module provides functions to interact with external HTTP services,
 primarily for checking package name availability on PyPI.
 """
 
+from http import HTTPStatus
+
 import click
 import requests
 
 PYPI_JSON_URL_TEMPLATE = "https://pypi.org/pypi/{package_name}/json"
+RESPONSE_CUT_OFF = 200
 
 
 def check_pypi_availability(package_name: str) -> tuple[bool | None, str | None]:
@@ -28,16 +31,19 @@ def check_pypi_availability(package_name: str) -> tuple[bool | None, str | None]
             - A string describing the error if the check failed or an issue occurred.
             - None if the check was successful (200 or 404).
     """
+
     url = PYPI_JSON_URL_TEMPLATE.format(package_name=package_name)
     try:
         response = requests.get(url, timeout=10)
 
-        if response.status_code == 200:
+        if response.status_code == HTTPStatus.OK:
             return True, None
-        if response.status_code == 404:
+        if response.status_code == HTTPStatus.NOT_FOUND:
             return False, None
 
-        response_content = response.text[:200] if response.text else "No content"
+        response_content = (
+            response.text[:RESPONSE_CUT_OFF] if response.text else "No content"
+        )
         error_msg = (
             f"PyPI check failed for '{package_name}'. "
             f"Unexpected status code: {response.status_code}. "
