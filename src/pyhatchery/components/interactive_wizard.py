@@ -3,14 +3,12 @@ Component responsible for guiding the user through an interactive wizard
 to gather project details.
 """
 
-from typing import Dict, List
-
 import click
 
 from pyhatchery.components.config_loader import get_git_config_value
 
-COMMON_LICENSES: List[str] = ["MIT", "Apache-2.0", "GPL-3.0"]
-PYTHON_VERSIONS: List[str] = ["3.10", "3.11", "3.12"]
+COMMON_LICENSES: list[str] = ["MIT", "Apache-2.0", "GPL-3.0"]
+PYTHON_VERSIONS: list[str] = ["3.10", "3.11", "3.12"]
 DEFAULT_PYTHON_VERSION: str = "3.11"
 DEFAULT_LICENSE: str = "MIT"
 
@@ -41,7 +39,7 @@ def prompt_for_value(
 
 
 def prompt_for_choice(
-    prompt_message: str, choices: List[str], default_choice: str, max_retries: int = 3
+    prompt_message: str, choices: list[str], default_choice: str, max_retries: int = 3
 ) -> str | None:
     "Helper function to prompt user to select from choices with retry limit."
     click.secho(prompt_message, fg="cyan")
@@ -75,7 +73,7 @@ def prompt_for_choice(
 def collect_project_details(
     project_name: str,
     name_warnings: list[str] | None,
-) -> Dict[str, str] | None:
+) -> dict[str, str] | None:
     """
     Collects project details from the user via an interactive wizard.
 
@@ -104,7 +102,7 @@ def collect_project_details(
     author_name_default = get_git_config_value("user.name")
     author_email_default = get_git_config_value("user.email")
 
-    details: Dict[str, str] = {}
+    details: dict[str, str] = {}
 
     try:
         details["author_name"] = (

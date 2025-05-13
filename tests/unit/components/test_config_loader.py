@@ -4,8 +4,8 @@ Unit tests for the config_loader component.
 
 import subprocess
 import unittest
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 from unittest.mock import MagicMock, patch
 
 import pytest

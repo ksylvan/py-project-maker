@@ -1,7 +1,6 @@
 """Command-line interface for PyHatchery."""
 
 import os
-from typing import Dict, Optional
 
 import click
 
@@ -71,15 +70,15 @@ def _perform_project_name_checks(
 
 
 def _get_project_details_non_interactive(
-    author: Optional[str],
-    email: Optional[str],
-    github_username: Optional[str],
-    description: Optional[str],
-    license_choice: Optional[str],  # Renamed from license to avoid conflict
-    python_version: Optional[str],
+    author: str | None,
+    email: str | None,
+    github_username: str | None,
+    description: str | None,
+    license_choice: str | None,  # Renamed from license to avoid conflict
+    python_version: str | None,
     name_warnings: list[str],
     _project_name: str,  # Original project name for context if needed
-) -> Dict[str, str] | None:
+) -> dict[str, str] | None:
     """
     Get project details for non-interactive mode, merging CLI args and .env values.
 
@@ -106,9 +105,9 @@ def _get_project_details_non_interactive(
             click.secho(f"Warning: {warning}", fg="yellow", err=True)
 
     env_values = load_from_env()
-    details: Dict[str, str] = {}
+    details: dict[str, str] = {}
 
-    field_sources: Dict[str, tuple[Optional[str], Optional[str], Optional[str]]] = {
+    field_sources: dict[str, tuple[str | None, str | None, str | None]] = {
         "author_name": (author, env_values.get("AUTHOR_NAME"), None),
         "author_email": (email, env_values.get("AUTHOR_EMAIL"), None),
         "github_username": (
@@ -226,12 +225,12 @@ def new(
     ctx: click.Context,
     project_name_arg: str,
     no_interactive: bool,
-    author: Optional[str],
-    email: Optional[str],
-    github_username: Optional[str],
-    description: Optional[str],
-    license_choice: Optional[str],
-    python_version: Optional[str],
+    author: str | None,
+    email: str | None,
+    github_username: str | None,
+    description: str | None,
+    license_choice: str | None,
+    python_version: str | None,
 ):
     """Create a new Python project."""
     debug_flag = ctx.obj.get("DEBUG", False)
@@ -276,7 +275,7 @@ def new(
         python_slug,
     )
 
-    project_details: Optional[Dict[str, str]] = None
+    project_details: dict[str, str] | None = None
     if no_interactive:
         project_details = _get_project_details_non_interactive(
             author,

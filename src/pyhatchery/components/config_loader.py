@@ -4,7 +4,6 @@ Component responsible for loading configuration from various sources.
 
 import subprocess
 from pathlib import Path
-from typing import Dict
 
 from dotenv import dotenv_values
 
@@ -40,7 +39,7 @@ def get_git_config_value(key: str) -> str | None:
         return None
 
 
-def load_from_env(env_file_path: str = ".env") -> Dict[str, str]:
+def load_from_env(env_file_path: str = ".env") -> dict[str, str]:
     """
     Loads variables from a .env file into a dictionary.
 

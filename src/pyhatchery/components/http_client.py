@@ -5,15 +5,13 @@ This module provides functions to interact with external HTTP services,
 primarily for checking package name availability on PyPI.
 """
 
-from typing import Tuple
-
 import click
 import requests
 
 PYPI_JSON_URL_TEMPLATE = "https://pypi.org/pypi/{package_name}/json"
 
 
-def check_pypi_availability(package_name: str) -> Tuple[bool | None, str | None]:
+def check_pypi_availability(package_name: str) -> tuple[bool | None, str | None]:
     """
     Checks if a package name is potentially taken on PyPI.
 
