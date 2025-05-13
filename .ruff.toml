@@ -1,5 +1,6 @@
 # Match black's line length.
 line-length = 88
+
 # Assume Python 3.10+.
 target-version = "py310"
 
@@ -32,11 +33,13 @@ exclude = [
 ]
 
 [lint]
-# Enable Pyflakes ("F") and pycodestyle ("E", "W") rules by default.
-# Adding "I" for isort compatibility checks.
-select = ["E", "F", "W", "I", "BLE001"]
-ignore = ["E203"]             # Ignore whitespace before ':' (compatible with black)
-
+flake8-import-conventions = {}
+select = ["E", "F", "W", "I", "BLE001", "UP"]
+ignore = ["E203"] # Ignore whitespace before ':' (compatible with black)
+extend-select = [
+    "UP006",
+    "UP007",
+] # Enforce using built-in types instead of typing ones
 
 [format]
 # Like Black, use double quotes for strings.
@@ -47,3 +50,5 @@ indent-style = "space"
 skip-magic-trailing-comma = false
 # Like Black, automatically detect the appropriate line ending.
 line-ending = "auto"
+# Enable Pyflakes ("F") and pycodestyle ("E", "W") rules by default.
+# Adding "I" for isort compatibility checks.
