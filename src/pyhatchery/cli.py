@@ -1,7 +1,7 @@
 """Command-line interface for PyHatchery."""
 
-import dataclasses
 import os
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, cast
 
@@ -28,7 +28,7 @@ from .components.project_generator import create_base_structure
 from .utils.config import str_to_bool
 
 
-@dataclasses.dataclass
+@dataclass
 class ProjectNameDetails:
     """Holds all derived names and warnings for a project."""
 
@@ -38,7 +38,7 @@ class ProjectNameDetails:
     name_warnings: list[str]
 
 
-@dataclasses.dataclass
+@dataclass
 class ProjectOptions:
     """Options for project creation."""
 
@@ -49,7 +49,7 @@ class ProjectOptions:
     description: str | None = None
     license_choice: str | None = None
     python_version: str | None = None
-    name_warnings: list[str] = dataclasses.field(default_factory=lambda: [])
+    name_warnings: list[str] = field(default_factory=lambda: [])
     project_name: str | None = None
 
 
@@ -180,15 +180,15 @@ def get_non_interactive_details(options: ProjectOptions) -> dict[str, str] | Non
     }
 
     # Populate details from available sources
-    for field, (cli_val, env_key, default_val) in field_map.items():
+    for f, (cli_val, env_key, default_val) in field_map.items():
         if cli_val is not None:
-            details[field] = cli_val
+            details[f] = cli_val
         elif env_values.get(env_key) is not None:
-            details[field] = env_values[env_key]
+            details[f] = env_values[env_key]
         elif default_val is not None:
-            details[field] = default_val
+            details[f] = default_val
         else:
-            details[field] = ""
+            details[f] = ""
 
     # Check for required fields
     missing_fields = [
@@ -199,8 +199,8 @@ def get_non_interactive_details(options: ProjectOptions) -> dict[str, str] | Non
         display_error(
             "The following required fields are missing in non-interactive mode:"
         )
-        for field in missing_fields:
-            click.secho(f"  - {field}", fg="red", err=True)
+        for f in missing_fields:
+            click.secho(f"  - {f}", fg="red", err=True)
         click.secho(
             "Please provide these values via CLI flags or .env file.",
             fg="red",
