@@ -33,7 +33,6 @@ exclude = [
 ]
 
 [lint]
-flake8-import-conventions = {}
 select = ["E", "F", "W", "I", "BLE001", "UP"]
 ignore = ["E203"] # Ignore whitespace before ':' (compatible with black)
 extend-select = [
