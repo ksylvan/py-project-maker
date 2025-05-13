@@ -241,14 +241,12 @@ def _process_project_name(
     """Validate and derive all project name variants and warnings."""
     if not project_name_arg:
         click.secho("Error: Project name cannot be empty.", fg="red", err=True)
-        ctx.exit(1)  # type: ignore[no-untyped-call]
-        return None  # Should not be reached
+        ctx.exit(1)
 
     has_invalid, invalid_error = has_invalid_characters(project_name_arg)
     if has_invalid:
         click.secho(f"Error: {invalid_error}", fg="red", err=True)
-        ctx.exit(1)  # type: ignore[no-untyped-call]
-        return None
+        ctx.exit(1)
 
     pypi_slug = pep503_normalize(project_name_arg)
 
@@ -384,13 +382,11 @@ def new(
         )
     except FileExistsError as e:
         click.secho(f"Error: {str(e)}", fg="red", err=True)
-        ctx.exit(1)  # type: ignore[no-untyped-call]
-        return 1
+        ctx.exit(1)
     except OSError as e:
         click.secho(
             f"Error creating project directory structure: {str(e)}", fg="red", err=True
         )
-        ctx.exit(1)  # type: ignore[no-untyped-call]
-        return 1
+        ctx.exit(1)
 
     return 0
