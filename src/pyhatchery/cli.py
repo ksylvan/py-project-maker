@@ -158,35 +158,6 @@ def _get_project_details_non_interactive(
     return details
 
 
-# Public alias for testing purposes to maintain compatibility
-def _alias_internal_get_project_details_non_interactive_for_testing(  # pylint: disable=R0913,R0917
-    author: str | None,
-    email: str | None,
-    github_username: str | None,
-    description: str | None,
-    license_choice: str | None,
-    python_version: str | None,
-    name_warnings: list[str],
-    _project_name: str,  # This is the pypi_slug / name_for_processing
-) -> dict[str, str] | None:
-    args = NonInteractiveProjectDetailsArgs(
-        author=author,
-        email=email,
-        github_username=github_username,
-        description=description,
-        license_choice=license_choice,
-        python_version=python_version,
-        name_warnings=name_warnings,
-        project_name=_project_name,
-    )
-    return _get_project_details_non_interactive(args)
-
-
-internal_get_project_details_non_interactive_for_testing = (
-    _alias_internal_get_project_details_non_interactive_for_testing
-)
-
-
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(
     __version__,
