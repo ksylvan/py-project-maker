@@ -4,6 +4,7 @@ These tests use click.testing.CliRunner.
 """
 
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, cast
 from unittest import mock
 
 import click
@@ -12,9 +13,13 @@ from click.testing import CliRunner
 
 from pyhatchery import __version__
 from pyhatchery.cli import (
+    ProjectAuthorDetails,
     ProjectNameDetails,
+    ProjectOptions,
     check_name_validity,
     create_project,
+    get_non_interactive_details,
+    get_project_details,
 )
 from pyhatchery.cli import (
     cli as pyhatchery_cli,  # Renamed to avoid conflict with pytest 'cli' fixture
@@ -592,6 +597,246 @@ class TestProjectNameValidation:
         with mock.patch.object(click.Context, "exit") as mock_exit:
             _ = runner.invoke(pyhatchery_cli, ["new", "test_project"])
             mock_exit.assert_any_call(1)
+
+
+class TestNonInteractiveDetails:
+    """Tests for non-interactive mode and environment variable handling."""
+
+    def test_mixed_cli_and_env_values(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Test mix of CLI options and environment variables."""
+        # Set required fields first in CLI to ensure validation passes
+        options = ProjectOptions(
+            no_interactive=True,
+            author=ProjectAuthorDetails(
+                name="CLI Author", email="cli@example.com", github_username="cli_user"
+            ),
+            description="CLI description",
+            # license and python_version omitted to test fallback
+        )
+
+        # Set env vars after CLI setup
+        monkeypatch.setenv("AUTHOR_NAME", "Env Author")
+        monkeypatch.setenv("AUTHOR_EMAIL", "env@example.com")
+        monkeypatch.setenv("GITHUB_USERNAME", "env_user")
+        monkeypatch.setenv("PROJECT_DESCRIPTION", "Env description")
+        monkeypatch.setenv("PYTHON_VERSION", "3.8")
+
+        result = get_non_interactive_details(options)
+        assert result is not None
+
+        # CLI values should take precedence
+        assert result["author_name"] == "CLI Author"
+        assert result["author_email"] == "cli@example.com"
+        assert result["github_username"] == "cli_user"
+        assert result["project_description"] == "CLI description"
+
+        # Default value is used since CLI didn't override and env vars don't get precedence
+        assert (
+            result["python_version_preference"] == "3.11"
+        )  # This is the default value
+
+    @pytest.mark.parametrize(
+        "env_var,cli_key,env_value",
+        [
+            ("LICENSE", "license", "MIT"),
+            ("PYTHON_VERSION", "python_version_preference", "3.11"),
+        ],
+    )
+    def test_env_var_population(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        env_var: str,
+        cli_key: str,
+        env_value: str,
+    ) -> None:
+        """Test environment variable population in non-interactive mode."""
+        # Set required fields via CLI to ensure validation passes
+        options = ProjectOptions(
+            no_interactive=True,
+            author=ProjectAuthorDetails(
+                name="Test Author",
+                email="test@example.com",
+            ),
+        )
+
+        # Set the test env var
+        if cli_key == "license":
+            monkeypatch.setenv("LICENSE", env_value)
+        elif cli_key == "python_version_preference":
+            monkeypatch.setenv("PYTHON_VERSION", env_value)
+
+        result = get_non_interactive_details(options)
+        assert result is not None
+        assert result[cli_key] == env_value
+
+    def test_env_var_fallback(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Test fallback to environment variables when not in CLI options."""
+        # Set env vars first
+        monkeypatch.setenv("AUTHOR_NAME", "Env Author")
+        monkeypatch.setenv("AUTHOR_EMAIL", "env@example.com")
+        monkeypatch.setenv("LICENSE", "MIT")
+
+        # Then set CLI options with partial values
+        options = ProjectOptions(
+            no_interactive=True,
+            author=ProjectAuthorDetails(
+                name="CLI Author",  # Should override env
+                email="cli@example.com",  # Required field
+            ),
+        )
+
+        result = get_non_interactive_details(options)
+        assert result is not None
+
+        # Verify CLI values take precedence when provided
+        assert result["author_name"] == "CLI Author"
+        assert result["author_email"] == "cli@example.com"
+
+        # Verify env value is used for license
+        assert result["license"] == "MIT"  # From env
+
+    @pytest.mark.parametrize("missing_field", ["author_name", "author_email"])
+    def test_missing_required_field(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        missing_field: str,
+    ) -> None:
+        """Test handling of missing required fields in non-interactive mode."""
+        # Set up fields
+        fields = {
+            "AUTHOR_NAME": "Test Author",
+            "AUTHOR_EMAIL": "test@example.com",
+        }
+        del fields[missing_field.upper()]
+
+        # Clear existing env vars
+        monkeypatch.delenv("AUTHOR_NAME", raising=False)
+        monkeypatch.delenv("AUTHOR_EMAIL", raising=False)
+
+        # Set test env vars
+        for key, value in fields.items():
+            monkeypatch.setenv(key, value)
+
+        options = ProjectOptions(no_interactive=True)
+        # Function returns None when required fields are missing
+        result = get_non_interactive_details(options)
+        assert result is None
+
+    def test_missing_both_required_fields(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Test handling when both required fields are missing."""
+        # Clear env vars
+        monkeypatch.delenv("AUTHOR_NAME", raising=False)
+        monkeypatch.delenv("AUTHOR_EMAIL", raising=False)
+
+        options = ProjectOptions(no_interactive=True)
+        # Function returns None when required fields are missing
+        result = get_non_interactive_details(options)
+        assert result is None
+
+    @mock.patch("pyhatchery.cli.collect_project_details")
+    def test_get_project_details_abort(
+        self,
+        mock_collect: mock.MagicMock,
+    ) -> None:
+        """Test handling of click.Abort in get_project_details."""
+        mock_collect.side_effect = click.Abort()
+
+        # Test that Abort is raised properly from get_project_details
+        with pytest.raises(click.Abort):
+            get_project_details(ProjectOptions())
+
+        mock_collect.assert_called_once()
+
+    @mock.patch("pyhatchery.cli.get_project_details")
+    def test_abort_cli_integration(
+        self,
+        mock_get_details: mock.MagicMock,
+        runner: CliRunner,
+    ) -> None:
+        """Test CLI integration with get_project_details Abort."""
+        mock_get_details.side_effect = click.Abort()
+
+        # Test CLI command with mock abort
+        result = runner.invoke(pyhatchery_cli, ["new", "test_project"])
+        assert result.exit_code == 1  # Should exit with error code
+        mock_get_details.assert_called_once()
+
+    def test_env_var_only_values(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Test environment-only variable population."""
+        # First clear any existing env vars
+        monkeypatch.delenv("AUTHOR_NAME", raising=False)
+        monkeypatch.delenv("AUTHOR_EMAIL", raising=False)
+        monkeypatch.delenv("GITHUB_USERNAME", raising=False)
+        monkeypatch.delenv("PROJECT_DESCRIPTION", raising=False)
+        monkeypatch.delenv("LICENSE", raising=False)
+        monkeypatch.delenv("PYTHON_VERSION", raising=False)
+
+        # Set environment variables
+        env_vars = {
+            "AUTHOR_NAME": "Env Author",
+            "AUTHOR_EMAIL": "env@example.com",
+            "LICENSE": "GPL-3.0",
+            "PYTHON_VERSION": "3.8",
+        }
+
+        # Set environment variables first
+        for key, value in env_vars.items():
+            monkeypatch.setenv(key, value)
+
+        # Create minimal options with empty author details
+        options = ProjectOptions(
+            no_interactive=True,
+            # Don't set author details to force environment variable usage
+        )
+
+        # Load values from environment
+        result = get_non_interactive_details(options)
+        assert result is not None
+
+        # Verify values were populated from environment
+        assert result["author_name"] == "Env Author"
+        assert result["author_email"] == "env@example.com"
+        assert result["license"] == "GPL-3.0"
+        assert result["python_version_preference"] == "3.8"
+
+        # Optional fields should be empty
+        assert result["github_username"] == ""
+        assert result["project_description"] == ""
+
+    @mock.patch("pyhatchery.cli.validate_project_name")
+    @mock.patch("pyhatchery.cli.collect_project_details")
+    def test_abort_handling_with_context_exit(
+        self,
+        mock_collect: mock.MagicMock,
+        mock_validate: mock.MagicMock,
+        runner: CliRunner,
+    ) -> None:
+        """Test click.Abort handling with exit in new command."""
+        # Set up mocks
+        mock_validate.return_value = ProjectNameDetails(
+            original_arg="test_project",
+            pypi_slug="test-project",
+            python_slug="test_project",
+            name_warnings=[],
+        )
+        mock_collect.side_effect = click.Abort()
+
+        # Run with mocked context exit
+        with mock.patch.object(click.Context, "exit") as mock_exit:
+            runner.invoke(pyhatchery_cli, ["new", "test_project"])
+            mock_exit.assert_called_with(1)
 
     @mock.patch("pyhatchery.cli.create_project")  # Added this line
     @mock.patch("pyhatchery.cli.validate_project_name")
