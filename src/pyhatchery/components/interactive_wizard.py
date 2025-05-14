@@ -28,6 +28,7 @@ def collect_project_details(
 
     Returns:
         Dictionary of project details or throws a click.Abort exception
+        (for example, if user cancels or performs a keyboard interrupt)
     """
     cli_defaults = cli_defaults or {}
 
