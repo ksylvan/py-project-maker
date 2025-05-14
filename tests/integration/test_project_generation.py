@@ -8,7 +8,9 @@ from collections.abc import Generator
 from pathlib import Path
 
 import pytest
+from click.testing import CliRunner
 
+from pyhatchery.cli import cli as pyhatchery_cli
 from tests.helpers import (
     get_minimal_non_interactive_args,
     run_pyhatchery_command,
@@ -21,80 +23,168 @@ def _rmdir(path: Path) -> None:
         shutil.rmtree(path)
 
 
-@pytest.fixture(name="managed_project_dir")
-def managed_project_dir_fixture(tmp_path: Path) -> Generator[Path, None, None]:
+@pytest.fixture(name="managed_project_base_dir")
+def managed_project_base_dir_fixture(tmp_path: Path) -> Generator[Path, None, None]:
     """
-    Pytest fixture for project directory management.
+    Pytest fixture for managing a base directory for project creation.
 
-    This fixture defines an expected project directory path within tmp_path.
-    It ensures this path is clear before a test (if it might exist from a
-    previous, failed run) and cleans up the directory after the test.
-    The test itself is responsible for the actual creation of this directory
-    using the CLI tool.
+    This fixture defines a base directory path within tmp_path.
+    It ensures this path is clear before a test and cleans it up afterwards.
+    Tests can then create projects inside this base directory.
     """
-    project_name = "TestProjectFixture"  # A consistent name for the fixture-managed dir
-    project_dir = tmp_path / project_name
+    base_dir_name = "TestProjectsBase"
+    base_dir = tmp_path / base_dir_name
 
-    # Pre-test: Ensure the directory is clean if it exists
-    if project_dir.exists():
-        shutil.rmtree(project_dir)
+    if base_dir.exists():
+        shutil.rmtree(base_dir)
+    base_dir.mkdir(parents=True)
 
-    yield project_dir  # Provide the path to the test
+    yield base_dir
 
-    # Post-test cleanup: remove the project directory if it was created by the test
-    _rmdir(project_dir)
+    shutil.rmtree(base_dir)
+
+
+@pytest.fixture
+def runner():
+    """Fixture that returns a CliRunner instance."""
+    return CliRunner()
 
 
 class TestProjectGeneration:
     """Integration tests for project directory structure generation."""
 
-    def test_creates_project_directory_structure(self, managed_project_dir: Path):
-        """Test that the CLI creates the correct project directory structure."""
-        project_name_to_create = managed_project_dir.name
+    def test_creates_project_directory_structure_in_cwd(self, tmp_path: Path):
+        """Test CLI creates structure in CWD when no output_dir is given."""
+        project_name_to_create = "ProjectInCwd"
         python_package_slug = project_name_to_create.lower()
+        project_root_in_tmp = tmp_path / project_name_to_create
 
-        # Act
-        args = get_minimal_non_interactive_args(project_name_to_create)
-        # Run the command in the parent of managed_project_dir (i.e., tmp_path).
-        # The 'new' command is expected to create the 'managed_project_dir' itself.
-        result = run_pyhatchery_command(args, cwd=managed_project_dir.parent)
+        try:
+            args = get_minimal_non_interactive_args(project_name_to_create)
+            result = run_pyhatchery_command(args, cwd=tmp_path)
 
-        # Assert
+            assert result.returncode == 0, (
+                f"stdout: {result.stdout}\nstderr: {result.stderr}"
+            )
+            assert project_root_in_tmp.exists(), (
+                f"Project root directory not created: {project_root_in_tmp}"
+            )
+            assert (project_root_in_tmp / "src" / python_package_slug).exists(), (
+                f"src/{python_package_slug} directory not created"
+            )
+            assert (project_root_in_tmp / "tests").exists(), (
+                "tests directory not created"
+            )
+            assert (project_root_in_tmp / "docs").exists(), "docs directory not created"
+        finally:
+            _rmdir(project_root_in_tmp)
+
+    def test_creates_project_in_specified_output_directory(
+        self, managed_project_base_dir: Path
+    ):
+        """Test CLI creates project in the directory specified by --output-dir."""
+        project_name_to_create = "OutputTestProject"
+        python_package_slug = project_name_to_create.lower()
+        # The project should be created as a subdirectory of managed_project_base_dir
+        expected_project_root = managed_project_base_dir / project_name_to_create
+
+        args = get_minimal_non_interactive_args(project_name_to_create) + [
+            "--output-dir",
+            str(managed_project_base_dir),
+        ]
+        # Run from a different CWD to ensure --output-dir is respected
+        result = run_pyhatchery_command(args, cwd=Path.cwd())  # Or any other dir
+
         assert result.returncode == 0, (
             f"stdout: {result.stdout}\nstderr: {result.stderr}"
         )
-
-        # Check that the directory structure was created correctly
-        # project_root is the path managed and yielded by the fixture
-        assert managed_project_dir.exists(), (
-            f"Project root directory not created: {managed_project_dir}"
+        assert expected_project_root.exists(), (
+            f"Project root directory not created at: {expected_project_root}"
         )
-        assert (managed_project_dir / "src" / python_package_slug).exists(), (
+        assert (expected_project_root / "src" / python_package_slug).exists(), (
             f"src/{python_package_slug} directory not created"
         )
-        assert (managed_project_dir / "tests").exists(), "tests directory not created"
-        assert (managed_project_dir / "docs").exists(), "docs directory not created"
+        assert (expected_project_root / "tests").exists(), "tests directory not created"
+        assert (expected_project_root / "docs").exists(), "docs directory not created"
+        # Cleanup is handled by managed_project_base_dir fixture
 
-        # Clean up is handled by the managed_project_dir fixture's teardown phase
+    def test_fails_if_target_project_path_exists_and_not_empty(
+        self, runner: CliRunner, tmp_path: Path
+    ):
+        """
+        Test that project creation fails if the target project directory
+        already exists and is not empty.
+        """
+        project_name = "my_project_nonempty"
+        base_output_dir = tmp_path / "custom_output_nonempty"
+        base_output_dir.mkdir(parents=True, exist_ok=True)
 
-    def test_fails_if_project_directory_exists_and_not_empty(self, tmp_path: Path):
-        """Test that the CLI fails if the project directory exists and is not empty."""
-        # Arrange
-        project_name = "ExistingProject"
-
-        # Create a non-empty directory
-        project_dir = tmp_path / project_name
+        project_dir = base_output_dir / project_name
         project_dir.mkdir(parents=True, exist_ok=True)
-        (project_dir / "some_file.txt").write_text("content")
+        (project_dir / "some_file.txt").write_text("hello")
 
-        # Act
-        args = get_minimal_non_interactive_args(project_name)
-        result = run_pyhatchery_command(args, cwd=tmp_path)
+        # Use direct invoke rather than runner.invoke to avoid potential deadlock
+        result = runner.invoke(
+            pyhatchery_cli,
+            [
+                "new",
+                project_name,
+                "--output-dir",
+                str(base_output_dir),
+                "--no-interactive",
+                "--author",
+                "Test Author",
+                "--email",
+                "test@example.com",
+            ],
+        )
 
-        # Assert
-        assert result.returncode == 1, f"Expected failure, got: {result.returncode}"
-        assert "Error: Project directory" in result.stderr
-        assert "already exists and is not empty" in result.stderr
+        assert result.exit_code == 1, (
+            f"Expected exit code 1, got {result.exit_code}. Stderr: {result.stderr}"
+        )
+        assert project_dir.exists()
+        assert (project_dir / "some_file.txt").exists()
 
-        # Clean up for this specific test case's setup
-        _rmdir(project_dir)
+        expected_stderr_part1 = f"Error: Project directory '{project_dir}'"
+        expected_stderr_part2 = "already exists and is not empty."
+
+        assert expected_stderr_part1 in result.stderr, (
+            f"Expected part1 ('{expected_stderr_part1}') not in stderr. "
+            f"Stderr: {result.stderr}"
+        )
+        assert expected_stderr_part2 in result.stderr, (
+            f"Expected part2 ('{expected_stderr_part2}') not in stderr. "
+            f"Stderr: {result.stderr}"
+        )
+
+    def test_fails_if_output_directory_is_a_file(
+        self, runner: CliRunner, tmp_path: Path
+    ):
+        """
+        Test that project creation fails if the specified output directory
+        is actually a file.
+        """
+        project_name = "FileAsOutputDir"
+        file_acting_as_output_dir = tmp_path / "iam_a_file.txt"
+        file_acting_as_output_dir.write_text("I should not be a directory.")
+
+        try:
+            args = get_minimal_non_interactive_args(project_name) + [
+                "--output-dir",
+                str(file_acting_as_output_dir),
+            ]
+            result = run_pyhatchery_command(args, cwd=tmp_path)
+
+            assert result.returncode == 2, (
+                f"Expected failure with code 2, got {result.returncode}"
+            )
+            assert (
+                "Error: Invalid value for '-o' / '--output-dir': Directory"
+                in result.stderr
+            )
+            assert f"'{str(file_acting_as_output_dir)}'" in result.stderr
+            assert "is a file." in result.stderr
+        finally:
+            if file_acting_as_output_dir.exists():
+                file_acting_as_output_dir.unlink()
+            _rmdir(tmp_path / project_name)  # Clean up potential project dir
