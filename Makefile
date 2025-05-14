@@ -8,6 +8,8 @@
 COVERAGE_FAIL_UNDER := 90
 COVERAGE_SRC := src/pyhatchery
 
+VERSION := $(shell uv run hatch version)
+
 help:
 	@echo "Usage: make [help | bootstrap | test | coverage | coverage-html | format | linters]"
 	@echo ""
@@ -18,6 +20,7 @@ help:
 	@echo "  coverage-html  : Run tests and generate an HTML coverage report."
 	@echo "  format         : Format the code using ruff."
 	@echo "  linters        : Run linters (ruff and pylint)."
+	@echo "  tag            : Tag the current git HEAD with the semantic versioning name."
 
 bootstrap:
 	# This will remove and re-create the virtual environment,
@@ -45,3 +48,6 @@ format:
 linters:
 	uv run ruff check .
 	uv run pylint .
+
+tag:
+	git tag v$(VERSION)

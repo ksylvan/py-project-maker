@@ -15,7 +15,7 @@ The testing strategy for PyHatchery aims to ensure the tool is robust, reliable,
     3. Ensure the CLI (interactive and non-interactive modes) behaves as expected across various inputs and edge cases.
     4. Validate the correctness of the generated project structure and file contents.
     5. Achieve a high level of code coverage for critical components, with an initial target of >90% for core logic.
-    6. Test coverage should be at least 80% (the higher the better)
+    6. Test coverage should be at least 90% (the higher the better)
 
 ## 2. Testing Levels
 
@@ -66,7 +66,8 @@ PyHatchery will employ a multi-layered testing approach:
 
 * **Scope** Ensure the entire PyHatchery code base is being continually tested.
   * We are using `pytest-cov` for this and it is included in the CI/CD pipeline.
-  * The minimum acceptable test coverage percentage is 80% (we will increase it over time).
+  * The minimum acceptable test coverage percentage is 90% (we will increase it over time).
+  * Use the convenient "make coverage" in the top directory of the repo to run test coverage.
 
 ## 3. Specialized Testing Types
 
@@ -95,3 +96,4 @@ PyHatchery will employ a multi-layered testing approach:
 | ------------- | ---------- | ------- | ---------------------------------------------------- | ----------- |
 | Initial draft | 2025-05-09 | 0.1     | Initial draft of the testing strategy for PyHatchery. | 3-Architect |
 | Test coverage | 2025-05-11 | 0.2     | Add info about test coverage | Kayvan Sylvan |
+| Makefile mention | 2025-05-13 | 0.4     | Easy Makefile "make coverage" mention | Kayvan Sylvan |

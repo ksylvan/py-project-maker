@@ -31,9 +31,11 @@
 3. A task is NOT COMPLETE till ALL tests and linters pass. From the top directory of the repo, run:
 
    ```bash
-   uv run pytest -v
-   uv run ruff check . && uv run pylint .
+   make test
+   make linters
    ```
+
+   The above will run the tests and linters (`ruff` and `pylint`)
 
    Also, we enforce strict type-checking, so please install pyright as described in the [contributing](./contributing.md) document, and run it like this:
 
@@ -50,3 +52,4 @@
 | Initial draft | 2025-05-09 | 0.1     | Initial draft based on PRD and Project Brief. | 3-Architect |
 | Agile documented | 2025-05-10 | 0.2     | Added note about AI-Agile tasks folder. | Kayvan Sylvan |
 | pyright added | 2025-05-10 | 0.3    | Pyright and strict typing | Kayvan Sylvan |
+| Makefile mention | 2025-05-13 | 0.4    | Makefile convenience commands added | Kayvan Sylvan |
