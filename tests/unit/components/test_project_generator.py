@@ -51,9 +51,9 @@ class TestSetupProjectDirectory:
         target_project_path = base_output_dir / project_name
         target_project_path.mkdir(parents=True, exist_ok=True)
 
-        with pytest.raises(FileExistsError) as excinfo:
+        with pytest.raises(FileExistsError) as exception_info:
             setup_project_directory(base_output_dir, project_name)
-        assert str(target_project_path) in str(excinfo.value)
+        assert str(target_project_path) in str(exception_info.value)
 
     def test_raises_not_a_directory_error_if_base_output_is_file(self, tmp_path: Path):
         """Test NotADirectoryError if base_output_dir is a file."""
@@ -61,9 +61,9 @@ class TestSetupProjectDirectory:
         base_output_dir_as_file.write_text("I am a file.")
         project_name = "TestProject"
 
-        with pytest.raises(NotADirectoryError) as excinfo:
+        with pytest.raises(NotADirectoryError) as exception_info:
             setup_project_directory(base_output_dir_as_file, project_name)
-        assert str(base_output_dir_as_file) in str(excinfo.value)
+        assert str(base_output_dir_as_file) in str(exception_info.value)
 
     @patch("pathlib.Path.mkdir")
     def test_raises_os_error_on_base_dir_creation_failure(
