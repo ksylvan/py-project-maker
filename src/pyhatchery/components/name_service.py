@@ -147,9 +147,9 @@ def has_invalid_characters(name: str) -> tuple[bool, str]:
         name: The project name to check for invalid characters
 
     Returns:
-        tuple[bool, str | None]: (has_invalid, error_message)
+        tuple[bool, str]: (has_invalid, error_message)
             - has_invalid: True if the name contains invalid characters
-            - error_message: The invalid characters found, or None if valid
+            - error_message: The invalid characters found, or the empty string if valid
     """
     invalid_chars = "!@#$%^&*+=}{[]|\\/:;\"'<>"
 
