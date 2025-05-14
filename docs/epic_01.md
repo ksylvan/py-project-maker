@@ -8,7 +8,7 @@
 
 - **User Story / Goal:** As a Python developer, I want to run `pyhatchery new <project_name>` so that I can initiate the project generation process and specify the name for my new project.
 - **Detailed Requirements:**
-  - Implement a main CLI entry point using `argparse` or a similar library.
+  - Implement a main CLI entry point using `click` or a similar library.
   - The `new` subcommand should accept a mandatory `project_name` argument.
   - Perform basic validation on the `project_name` (e.g., ensure it's a valid potential directory name, not empty). Complex validation like PEP 8 and PyPI checks will be handled in Story 1.1A.
   - Store the provided project name for later use in generation and further validation.

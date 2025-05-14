@@ -79,7 +79,7 @@ graph TD
 **Core Component Descriptions:**
 
 1. **`CLI Handler (Main)`:**
-    * **Responsibility:** The main entry point of the application. Parses initial command-line arguments (like `new`, `<project_name>`, `--output-dir`, `--no-interactive`, and other non-interactive flags) using a library like `argparse`. Orchestrates the overall workflow by invoking other components in sequence. Handles top-level error catching and user feedback messages (e.g., success, failure, help text).
+    * **Responsibility:** The main entry point of the application. Parses initial command-line arguments (like `new`, `<project_name>`, `--output-dir`, `--no-interactive`, and other non-interactive flags) using a modern library like `click`. Orchestrates the overall workflow by invoking other components in sequence. Handles top-level error catching and user feedback messages (e.g., success, failure, help text).
     * **Interactions:** Receives input from the User. Invokes the `Interactive Wizard` (if applicable), `Config Loader`, `Project Name Service`, `Context Builder`, `Template Processor`, and `Project Generator`.
 
 2. **`Config Loader`:**
@@ -144,8 +144,8 @@ This section outlines the significant architectural choices and patterns employe
     * **Justification:** This offers users flexibility, allowing them to specify configurations through multiple convenient methods, catering to both interactive use and automated scripting. Libraries like `python-dotenv` will be used for `.env` parsing, and `subprocess` for `git config` calls.
 
 4. **CLI Argument Parsing:**
-    * **Decision:** The Python standard library's `argparse` module is used for parsing command-line arguments and subcommands.
-    * **Justification:** `argparse` is robust, part of the standard library (no external dependency for this core function), and well-understood by Python developers. It capably handles the required CLI structure (e.g., `pyhatchery new <project_name> --flags`).
+    * **Decision:** The Python library's `click` module is used for parsing command-line arguments and subcommands.
+    * **Justification:** `click` is robust, has an active GitHub repo and community, and well-understood by Python developers. It capably handles the required CLI structure (e.g., `pyhatchery new <project_name> --flags`).
 
 5. **Interactive Input Handling:**
     * **Decision:** For interactive mode, standard Python `input()` prompts will be used to gather information from the user. Input validation will be performed for each prompt where necessary.

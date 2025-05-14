@@ -24,7 +24,7 @@ from .components.name_service import (
     pep503_name_ok,
     pep503_normalize,
 )
-from .components.project_generator import create_base_structure
+from .components.project_generator import create_base_structure, setup_project_directory
 from .utils.config import str_to_bool
 
 
@@ -58,6 +58,7 @@ class ProjectOptions:
     python_version: str | None = None
     name_warnings: list[str] = field(default_factory=lambda: [])
     project_name: str | None = None
+    output_dir: Path | None = None  # Added for custom output location
 
 
 def display_warning(message: str) -> None:
@@ -193,8 +194,8 @@ def get_non_interactive_details(options: ProjectOptions) -> dict[str, str] | Non
     field_map: dict[str, tuple[str | None, str, str | None]] = {
         "author_name": (options.author.name, "AUTHOR_NAME", None),
         "author_email": (options.author.email, "AUTHOR_EMAIL", None),
-        "github_username": (options.author.github_username, "GITHUB_USERNAME", None),
-        "project_description": (options.description, "PROJECT_DESCRIPTION", None),
+        "github_username": (options.author.github_username, "GITHUB_USERNAME", ""),
+        "project_description": (options.description, "PROJECT_DESCRIPTION", ""),
         "license": (options.license_choice, "LICENSE", DEFAULT_LICENSE),
         "python_version_preference": (
             options.python_version,
@@ -211,8 +212,6 @@ def get_non_interactive_details(options: ProjectOptions) -> dict[str, str] | Non
             details[f] = env_values[env_key]
         elif default_val is not None:
             details[f] = default_val
-        else:
-            details[f] = ""
 
     # Check for required fields
     missing_fields = [
@@ -236,7 +235,10 @@ def get_non_interactive_details(options: ProjectOptions) -> dict[str, str] | Non
 
 
 def create_project(
-    name_data: ProjectNameDetails, project_details: dict[str, str], debug: bool
+    name_data: ProjectNameDetails,
+    project_details: dict[str, str],
+    output_dir: Path | None,  # Added for custom output location
+    debug: bool,
 ) -> int:
     """Create the project structure."""
     # Add name details to project details
@@ -262,14 +264,21 @@ def create_project(
         click.secho(f"With details: {debug_info}", fg="blue")
 
     try:
-        output_path = Path.cwd()
-        project_root = create_base_structure(
-            output_path,
+        base_output_dir = output_dir if output_dir else Path.cwd()
+
+        actual_project_root_path = setup_project_directory(
+            base_output_dir,
             project_details["project_name_original"],
+        )
+
+        create_base_structure(
+            actual_project_root_path,
             project_details["python_package_slug"],
+            project_details["project_name_original"],  # Pass original name for README
         )
         click.secho(
-            f"Project directory structure created at: {project_root}", fg="green"
+            f"Project directory structure created at: {actual_project_root_path}",
+            fg="green",
         )
         return 0
     except FileExistsError as e:
@@ -330,6 +339,14 @@ def cli(ctx: click.Context, debug: bool):
     show_default=f"Defaults to {DEFAULT_PYTHON_VERSION} "
     "if not specified in .env or CLI.",
 )
+@click.option(
+    "-o",
+    "--output-dir",
+    "output_dir_cli",  # Use a different dest to avoid conflict with existing var name
+    default=None,
+    help="Output directory for the project.",
+    type=click.Path(file_okay=False, dir_okay=True, writable=True, resolve_path=True),
+)
 @click.pass_context
 def new(ctx: click.Context, project_name_arg: str, **kwargs: Any) -> int:
     """Create a new Python project."""
@@ -347,6 +364,9 @@ def new(ctx: click.Context, project_name_arg: str, **kwargs: Any) -> int:
         description=cast(str | None, kwargs.get("description")),
         license_choice=cast(str | None, kwargs.get("license_choice")),
         python_version=cast(str | None, kwargs.get("python_version")),
+        output_dir=Path(kwargs["output_dir_cli"])
+        if kwargs.get("output_dir_cli")
+        else None,
     )
 
     debug_flag = ctx.obj.get("DEBUG", False)
@@ -367,7 +387,7 @@ def new(ctx: click.Context, project_name_arg: str, **kwargs: Any) -> int:
         ctx.exit(1)
 
     # Create the project
-    if create_project(name_data, project_details, debug_flag):
+    if create_project(name_data, project_details, options.output_dir, debug_flag):
         ctx.exit(1)
     click.secho(f"Project created successfully: {name_data.pypi_slug}", fg="green")
     return 0

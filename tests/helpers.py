@@ -86,3 +86,26 @@ def get_full_non_interactive_args(project_name: str) -> list[str]:
         "--python-version",
         "3.10",
     ]
+
+
+def get_sample_project_dir_args(project_name: str, output_dir: Path) -> list[str]:
+    """
+    Returns the path to the sample project directory.
+    Args:
+        project_name: The name of the project to create
+        output_dir: The directory where the project will be created
+
+    Returns:
+        List of command-line arguments for non-interactive mode with --output-dir option
+    """
+    return [
+        "new",
+        project_name,
+        "--output-dir",
+        str(output_dir),
+        "--no-interactive",
+        "--author",
+        "Test Author",
+        "--email",
+        "test@example.com",
+    ]

@@ -11,7 +11,7 @@
 | **Key Libraries (Runtime)** | Jinja2                                      | Latest stable            | For templating all generated project files.                                           | Powerful and widely-used templating engine.     |
 |                               | python-dotenv                               | Latest stable            | For loading default configurations from `.env` files in non-interactive mode.       | Standard for managing environment variables.    |
 |                               | requests (or similar)                       | Latest stable            | For making HTTP requests to check PyPI for package name availability.                 | Well-established HTTP client library.           |
-|                               | Python Standard Library (argparse, pathlib, shutil) | Built-in                 | For CLI argument parsing, file system path manipulation, and file operations.       | Core functionalities, no external dependencies needed.       |
+|                               | Python Standard Library (pathlib, shutil) | Built-in                 | For CLI argument parsing, file system path manipulation, and file operations.       | Core functionalities, no external dependencies needed.       |
 | **Development Tools** | uv                                          | Latest stable            | For managing PyHatchery's own development virtual environment and dependencies.       | Fast, modern Python package installer and resolver. |
 |                               | Ruff                                        | Latest stable            | For linting and formatting PyHatchery's own codebase.                                 | Extremely fast Python linter and formatter.     |
 |                               | Pylint                                      | Latest stable            | For comprehensive static analysis of PyHatchery's codebase.                           | Thorough linter for ensuring code quality.      |
@@ -31,9 +31,11 @@
 3. A task is NOT COMPLETE till ALL tests and linters pass. From the top directory of the repo, run:
 
    ```bash
-   uv run pytest -v
-   uv run ruff check . && uv run pylint .
+   make test
+   make linters
    ```
+
+   The above will run the tests and linters (`ruff` and `pylint`)
 
    Also, we enforce strict type-checking, so please install pyright as described in the [contributing](./contributing.md) document, and run it like this:
 
@@ -50,3 +52,4 @@
 | Initial draft | 2025-05-09 | 0.1     | Initial draft based on PRD and Project Brief. | 3-Architect |
 | Agile documented | 2025-05-10 | 0.2     | Added note about AI-Agile tasks folder. | Kayvan Sylvan |
 | pyright added | 2025-05-10 | 0.3    | Pyright and strict typing | Kayvan Sylvan |
+| Makefile mention | 2025-05-13 | 0.4    | Makefile convenience commands added | Kayvan Sylvan |

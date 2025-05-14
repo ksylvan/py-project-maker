@@ -163,7 +163,7 @@ The following technical guidance is provided to inform architecture decisions fo
 - **PyHatchery Core Language & Platform:** Python `>=3.11`.
 - **PyHatchery Build System:** `hatchling >=1.27.0`.
 - **PyHatchery Key Libraries (Runtime Dependencies):**
-  - Python Standard Library (`argparse`, `pathlib`, `shutil`).
+  - Python Standard Library (`pathlib`, `shutil`, etc).
   - `jinja2` for all file templating.
   - `python-dotenv` for managing environment variables for non-interactive mode defaults.
   - `requests` (or similar robust HTTP client) for PyPI name availability check.
