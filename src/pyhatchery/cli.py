@@ -194,8 +194,8 @@ def get_non_interactive_details(options: ProjectOptions) -> dict[str, str] | Non
     field_map: dict[str, tuple[str | None, str, str | None]] = {
         "author_name": (options.author.name, "AUTHOR_NAME", None),
         "author_email": (options.author.email, "AUTHOR_EMAIL", None),
-        "github_username": (options.author.github_username, "GITHUB_USERNAME", None),
-        "project_description": (options.description, "PROJECT_DESCRIPTION", None),
+        "github_username": (options.author.github_username, "GITHUB_USERNAME", ""),
+        "project_description": (options.description, "PROJECT_DESCRIPTION", ""),
         "license": (options.license_choice, "LICENSE", DEFAULT_LICENSE),
         "python_version_preference": (
             options.python_version,
@@ -212,8 +212,6 @@ def get_non_interactive_details(options: ProjectOptions) -> dict[str, str] | Non
             details[f] = env_values[env_key]
         elif default_val is not None:
             details[f] = default_val
-        else:
-            details[f] = ""
 
     # Check for required fields
     missing_fields = [

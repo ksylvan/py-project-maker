@@ -13,6 +13,7 @@ from click.testing import CliRunner
 from pyhatchery.cli import cli as pyhatchery_cli
 from tests.helpers import (
     get_minimal_non_interactive_args,
+    get_sample_project_dir_args,
     run_pyhatchery_command,
 )
 
@@ -44,8 +45,8 @@ def managed_project_base_dir_fixture(tmp_path: Path) -> Generator[Path, None, No
     shutil.rmtree(base_dir)
 
 
-@pytest.fixture
-def runner():
+@pytest.fixture(name="runner")
+def runner_fixture():
     """Fixture that returns a CliRunner instance."""
     return CliRunner()
 
@@ -126,17 +127,7 @@ class TestProjectGeneration:
         # Use direct invoke rather than runner.invoke to avoid potential deadlock
         result = runner.invoke(
             pyhatchery_cli,
-            [
-                "new",
-                project_name,
-                "--output-dir",
-                str(base_output_dir),
-                "--no-interactive",
-                "--author",
-                "Test Author",
-                "--email",
-                "test@example.com",
-            ],
+            get_sample_project_dir_args(project_name, base_output_dir),
         )
 
         assert result.exit_code == 1, (
@@ -167,6 +158,8 @@ class TestProjectGeneration:
         project_name = "FileAsOutputDir"
         file_acting_as_output_dir = tmp_path / "iam_a_file.txt"
         file_acting_as_output_dir.write_text("I should not be a directory.")
+
+        _ = runner  # avoid unused variable warning
 
         try:
             args = get_minimal_non_interactive_args(project_name) + [

@@ -16,6 +16,7 @@
 		"CLIH",
 		"cliuser",
 		"conftest",
+		"delenv",
 		"direnv",
 		"docstrings",
 		"dotenv",

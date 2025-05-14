@@ -138,7 +138,7 @@ class TestLoadFromEnv:
         mock_path_in_cl.assert_called_once_with(non_existent_env_file_str)
         mock_path_instance.is_file.assert_called_once()
         mock_dotenv_values_in_cl.assert_not_called()
-        assert result == {}
+        assert not result
 
     @patch("pyhatchery.components.config_loader.Path")
     @patch("pyhatchery.components.config_loader.dotenv_values")
@@ -163,7 +163,7 @@ class TestLoadFromEnv:
         mock_path_in_cl.assert_called_once_with(real_env_file_path_str)
         mock_path_instance.is_file.assert_called_once()
         mock_dotenv_values_in_cl.assert_called_once_with(dotenv_path=mock_path_instance)
-        assert result == {}
+        assert not result
 
     @patch("pyhatchery.components.config_loader.Path")
     @patch("pyhatchery.components.config_loader.dotenv_values")
@@ -204,4 +204,4 @@ class TestLoadFromEnv:
         mock_path_in_cl.assert_called_once_with(".env")
         mock_path_instance.is_file.assert_called_once()
         mock_dotenv_values_in_cl.assert_not_called()
-        assert result == {}
+        assert not result

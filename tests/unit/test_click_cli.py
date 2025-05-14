@@ -4,7 +4,6 @@ These tests use click.testing.CliRunner.
 """
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, cast
 from unittest import mock
 
 import click
@@ -132,6 +131,8 @@ class TestBasicFunctionality:
         project_name = f"testenvdebug_{tmp_path.name}"  # Unique project name
         fake_project_path = tmp_path / project_name
         mock_setup_dir.return_value = fake_project_path
+
+        _ = mock_create_structure  # avoid unused variable warning
 
         with mock.patch("pyhatchery.cli.collect_project_details") as mock_collect:
             mock_collect.return_value = {
@@ -633,10 +634,8 @@ class TestNonInteractiveDetails:
         assert result["github_username"] == "cli_user"
         assert result["project_description"] == "CLI description"
 
-        # Default value is used since CLI didn't override and env vars don't get precedence
-        assert (
-            result["python_version_preference"] == "3.11"
-        )  # This is the default value
+        # Since CLI didn't provide python_version, env var is used
+        assert result["python_version_preference"] == "3.8"
 
     @pytest.mark.parametrize(
         "env_var,cli_key,env_value",
@@ -661,6 +660,7 @@ class TestNonInteractiveDetails:
                 email="test@example.com",
             ),
         )
+        _ = env_var  # Avoid unused variable warning
 
         # Set the test env var
         if cli_key == "license":
