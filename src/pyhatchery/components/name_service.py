@@ -46,7 +46,7 @@ def derive_python_package_slug(name: str) -> str:
         name: The project name.
 
     Returns:
-        A string suitable for use as a Python package name.
+        A string suitable for use as a Python package name or throws ValueError
     """
     slug = re.sub(r"[^a-zA-Z0-9_]", "_", name)
     slug = slug.lower()
@@ -54,16 +54,21 @@ def derive_python_package_slug(name: str) -> str:
     slug = slug.strip("_")
 
     if not slug:
-        return "default_package_name"
+        raise ValueError(
+            f"Derived Python package slug from {name} is empty. "
+            "Please provide a valid project name."
+        )
 
     if keyword.iskeyword(slug):
-        return "default_package_name"
-
-    if not slug.isidentifier():
-        if slug[0].isdigit():
-            slug = f"p_{slug}"
-        if not slug.isidentifier():
-            return "default_package_name"
+        raise ValueError(
+            f"Derived Python package slug from {name} is a reserved keyword. "
+            "Please provide a valid project name."
+        )
+    if slug[0].isdigit():
+        raise ValueError(
+            f"Derived Python package slug from {name} starts with a digit. "
+            "Please provide a valid project name."
+        )
 
     return slug
 
@@ -129,7 +134,7 @@ def pep503_name_ok(project_name: str) -> tuple[bool, str | None]:
     return True, None
 
 
-def has_invalid_characters(name: str) -> tuple[bool, str | None]:
+def has_invalid_characters(name: str) -> tuple[bool, str]:
     """
     Check if the project name contains characters that are not allowed.
     This is a stricter check than PEP503 normalization, which simply
@@ -142,9 +147,9 @@ def has_invalid_characters(name: str) -> tuple[bool, str | None]:
         name: The project name to check for invalid characters
 
     Returns:
-        tuple[bool, str | None]: (has_invalid, error_message)
+        tuple[bool, str]: (has_invalid, error_message)
             - has_invalid: True if the name contains invalid characters
-            - error_message: The invalid characters found, or None if valid
+            - error_message: The invalid characters found, or the empty string if valid
     """
     invalid_chars = "!@#$%^&*+=}{[]|\\/:;\"'<>"
 
@@ -154,4 +159,4 @@ def has_invalid_characters(name: str) -> tuple[bool, str | None]:
         chars_str = ", ".join([f"'{c}'" for c in found_invalid])
         return True, f"Project name contains invalid characters: {chars_str}"
 
-    return False, None
+    return False, ""

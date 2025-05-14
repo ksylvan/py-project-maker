@@ -1,7 +1,9 @@
 """Command-line interface for PyHatchery."""
 
 import os
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any, cast
 
 import click
 
@@ -26,37 +28,121 @@ from .components.project_generator import create_base_structure
 from .utils.config import str_to_bool
 
 
-def _perform_project_name_checks(
-    original_input_name: str, pypi_slug: str, python_slug: str
-) -> list[str]:
-    """
-    Helper to perform and print warnings for project name checks.
-    Returns a list of warning messages.
-    """
+@dataclass
+class ProjectAuthorDetails:
+    """Holds author details for a project."""
+
+    name: str | None = None
+    email: str | None = None
+    github_username: str | None = None
+
+
+@dataclass
+class ProjectNameDetails:
+    """Holds all derived names and warnings for a project."""
+
+    original_arg: str
+    pypi_slug: str
+    python_slug: str
+    name_warnings: list[str]
+
+
+@dataclass
+class ProjectOptions:
+    """Options for project creation."""
+
+    no_interactive: bool = False
+    author: ProjectAuthorDetails = field(default_factory=ProjectAuthorDetails)
+    description: str | None = None
+    license_choice: str | None = None
+    python_version: str | None = None
+    name_warnings: list[str] = field(default_factory=lambda: [])
+    project_name: str | None = None
+
+
+def display_warning(message: str) -> None:
+    """Display a warning message."""
+    click.secho(f"Warning: {message}", fg="yellow", err=True)
+
+
+def display_error(message: str) -> None:
+    """Display an error message."""
+    click.secho(f"Error: {message}", fg="red", err=True)
+
+
+def validate_project_name(project_name: str, ctx: click.Context) -> ProjectNameDetails:
+    """Validate and process the project name."""
+    if not project_name:
+        display_error("Project name cannot be empty.")
+        ctx.exit(1)
+
+    has_invalid, invalid_error = has_invalid_characters(project_name)
+    if has_invalid:
+        display_error(invalid_error)
+        ctx.exit(1)
+
+    pypi_slug = pep503_normalize(project_name)
+    python_slug = derive_python_package_slug(pypi_slug)
+
     warnings: list[str] = []
 
+    # Check if name is PEP-compliant
+    is_name_ok, name_error_message = pep503_name_ok(project_name)
+    if not is_name_ok:
+        warnings.append(f"Project name '{project_name}': {name_error_message}")
+
+    # Notify if name was normalized
+    if project_name != pypi_slug:
+        warnings.append(f"Project name '{project_name}' normalized to '{pypi_slug}'.")
+
+    # Display derived names
+    click.secho(f"Derived PyPI slug: {pypi_slug}", fg="blue", err=True)
+    click.secho(f"Derived Python package slug: {python_slug}", fg="blue", err=True)
+
+    # Show any warnings
+    for warning in warnings:
+        display_warning(warning)
+
+    # Check PyPI availability and Python package validity
+    name_warnings = check_name_validity(project_name, pypi_slug, python_slug)
+
+    return ProjectNameDetails(
+        original_arg=project_name,
+        pypi_slug=pypi_slug,
+        python_slug=python_slug,
+        name_warnings=name_warnings,
+    )
+
+
+def check_name_validity(
+    original_name: str, pypi_slug: str, python_slug: str
+) -> list[str]:
+    """Check PyPI availability and Python package name validity."""
+    warnings: list[str] = []
+
+    # Check PyPI availability
     is_pypi_taken, pypi_error_msg = check_pypi_availability(pypi_slug)
     if pypi_error_msg:
-        msg = f"PyPI availability check for '{pypi_slug}' failed: {pypi_error_msg}"
-        warnings.append(msg)
+        warnings.append(
+            f"PyPI availability check for '{pypi_slug}' failed: {pypi_error_msg}"
+        )
     elif is_pypi_taken:
-        msg = (
+        warnings.append(
             f"The name '{pypi_slug}' might already be taken on PyPI. "
             "You may want to choose a different name if you plan to publish "
             "this package publicly."
         )
-        warnings.append(msg)
 
+    # Check Python package name validity
     is_python_slug_valid, python_slug_error_msg = is_valid_python_package_name(
         python_slug
     )
     if not is_python_slug_valid:
-        warning_msg = (
+        warnings.append(
             f"Derived Python package name '{python_slug}' "
-            f"(from input '{original_input_name}') is not PEP 8 compliant: "
+            f"(from input '{original_name}') is not PEP 8 compliant: "
             f"{python_slug_error_msg}"
         )
-        warnings.append(warning_msg)
 
     if warnings:
         click.secho(
@@ -65,95 +151,80 @@ def _perform_project_name_checks(
             fg="yellow",
             err=True,
         )
-        for _w in warnings:
-            click.secho(f"Warning: {_w}", fg="yellow", err=True)
+        for warning in warnings:
+            display_warning(warning)
 
     return warnings
 
 
-def _get_project_details_non_interactive(
-    author: str | None,
-    email: str | None,
-    github_username: str | None,
-    description: str | None,
-    license_choice: str | None,  # Renamed from license to avoid conflict
-    python_version: str | None,
-    name_warnings: list[str],
-    _project_name: str,  # Original project name for context if needed
-) -> dict[str, str] | None:
-    """
-    Get project details for non-interactive mode, merging CLI args and .env values.
+def get_project_details(options: ProjectOptions) -> dict[str, str] | None:
+    """Get project details either interactively or non-interactively."""
 
-    Args:
-        author: Author name from CLI.
-        email: Author email from CLI.
-        github_username: GitHub username from CLI.
-        description: Project description from CLI.
-        license_choice: License choice from CLI.
-        python_version: Python version from CLI.
-        name_warnings: Warnings related to the project name.
-        _project_name: The validated project name.
+    if options.no_interactive:
+        return get_non_interactive_details(options)
 
-    Returns:
-        A dictionary containing project details, or None if required fields are missing.
-    """
-    if name_warnings:
-        click.secho(
-            "Warnings were found during project name checks (non-interactive mode):",
-            fg="yellow",
-            err=True,
-        )
-        for warning in name_warnings:
-            click.secho(f"Warning: {warning}", fg="yellow", err=True)
+    # Create a dictionary of default values from CLI options
+    defaults: dict[str, str] = {}
 
+    if options.author.name:
+        defaults["author_name"] = options.author.name
+    if options.author.email:
+        defaults["author_email"] = options.author.email
+    if options.author.github_username:
+        defaults["github_username"] = options.author.github_username
+    if options.description:
+        defaults["project_description"] = options.description
+    if options.license_choice:
+        defaults["license"] = options.license_choice
+    if options.python_version:
+        defaults["python_version_preference"] = options.python_version
+
+    return collect_project_details(
+        cast(str, options.project_name), options.name_warnings, defaults
+    )
+
+
+def get_non_interactive_details(options: ProjectOptions) -> dict[str, str] | None:
+    """Get project details in non-interactive mode."""
     env_values = load_from_env()
     details: dict[str, str] = {}
 
-    field_sources: dict[str, tuple[str | None, str | None, str | None]] = {
-        "author_name": (author, env_values.get("AUTHOR_NAME"), None),
-        "author_email": (email, env_values.get("AUTHOR_EMAIL"), None),
-        "github_username": (
-            github_username,
-            env_values.get("GITHUB_USERNAME"),
-            None,
-        ),
-        "project_description": (
-            description,
-            env_values.get("PROJECT_DESCRIPTION"),
-            None,
-        ),
-        "license": (license_choice, env_values.get("LICENSE"), DEFAULT_LICENSE),
+    # Define fields with their sources (CLI, env, default)
+    field_map: dict[str, tuple[str | None, str, str | None]] = {
+        "author_name": (options.author.name, "AUTHOR_NAME", None),
+        "author_email": (options.author.email, "AUTHOR_EMAIL", None),
+        "github_username": (options.author.github_username, "GITHUB_USERNAME", None),
+        "project_description": (options.description, "PROJECT_DESCRIPTION", None),
+        "license": (options.license_choice, "LICENSE", DEFAULT_LICENSE),
         "python_version_preference": (
-            python_version,
-            env_values.get("PYTHON_VERSION"),
+            options.python_version,
+            "PYTHON_VERSION",
             DEFAULT_PYTHON_VERSION,
         ),
     }
 
-    for field, sources in field_sources.items():
-        cli_val, env_val, default_val = sources
+    # Populate details from available sources
+    for f, (cli_val, env_key, default_val) in field_map.items():
         if cli_val is not None:
-            details[field] = cli_val
-        elif env_val is not None:
-            details[field] = env_val
+            details[f] = cli_val
+        elif env_values.get(env_key) is not None:
+            details[f] = env_values[env_key]
         elif default_val is not None:
-            details[field] = default_val
+            details[f] = default_val
         else:
-            details[field] = ""  # Ensure key exists even if empty
+            details[f] = ""
 
-    missing_fields: list[str] = []
-    for field in ["author_name", "author_email"]:
-        if not details.get(field):  # Use .get() for safety
-            missing_fields.append(field)
+    # Check for required fields
+    missing_fields = [
+        field for field in ["author_name", "author_email"] if not details.get(field)
+    ]
 
     if missing_fields:
-        click.secho(
-            "Error: The following required fields are missing in non-interactive mode:",
-            fg="red",
-            err=True,
+        display_error(
+            "The following required fields are missing in non-interactive mode:"
         )
-        for field in missing_fields:
-            click.secho(f"  - {field}", fg="red", err=True)
+        for f in missing_fields:
+            click.secho(f"  - {f}", fg="red", err=True)
         click.secho(
             "Please provide these values via CLI flags or .env file.",
             fg="red",
@@ -164,10 +235,49 @@ def _get_project_details_non_interactive(
     return details
 
 
-# Public alias for testing purposes
-internal_get_project_details_non_interactive_for_testing = (
-    _get_project_details_non_interactive
-)
+def create_project(
+    name_data: ProjectNameDetails, project_details: dict[str, str], debug: bool
+) -> int:
+    """Create the project structure."""
+    # Add name details to project details
+    project_details.update(
+        {
+            "project_name_original": name_data.original_arg,
+            "project_name_normalized": name_data.pypi_slug,
+            "pypi_slug": name_data.pypi_slug,
+            "python_package_slug": name_data.python_slug,
+        }
+    )
+
+    click.secho(f"Creating new project: {name_data.pypi_slug}", fg="green")
+
+    if debug:
+        debug_info = {
+            "original_input_name": name_data.original_arg,
+            "name_for_processing": name_data.pypi_slug,
+            "pypi_slug": name_data.pypi_slug,
+            "python_slug": name_data.python_slug,
+            **project_details,
+        }
+        click.secho(f"With details: {debug_info}", fg="blue")
+
+    try:
+        output_path = Path.cwd()
+        project_root = create_base_structure(
+            output_path,
+            project_details["project_name_original"],
+            project_details["python_package_slug"],
+        )
+        click.secho(
+            f"Project directory structure created at: {project_root}", fg="green"
+        )
+        return 0
+    except FileExistsError as e:
+        display_error(str(e))
+        return 1
+    except OSError as e:
+        display_error(f"Error creating project directory structure: {str(e)}")
+        return 1
 
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
@@ -185,11 +295,9 @@ def cli(ctx: click.Context, debug: bool):
     try:
         env_debug = str_to_bool(os.environ.get("PYHATCHERY_DEBUG", "false"))
     except ValueError:
-        click.secho(
-            "Warning: Invalid value for PYHATCHERY_DEBUG environment variable. "
-            "Falling back to debug mode being disabled.",
-            fg="yellow",
-            err=True,
+        display_warning(
+            "Invalid value for PYHATCHERY_DEBUG environment variable. "
+            "Falling back to debug mode being disabled."
         )
         env_debug = False
     ctx.obj = {"DEBUG": debug or env_debug}
@@ -208,7 +316,7 @@ def cli(ctx: click.Context, debug: bool):
 @click.option("--description", help="Description of the project.")
 @click.option(
     "--license",
-    "license_choice",  # Use a different dest name
+    "license_choice",
     type=click.Choice(COMMON_LICENSES),
     default=None,
     help=f"License for the project. Choices: {', '.join(COMMON_LICENSES)}.",
@@ -223,116 +331,43 @@ def cli(ctx: click.Context, debug: bool):
     "if not specified in .env or CLI.",
 )
 @click.pass_context
-def new(
-    ctx: click.Context,
-    project_name_arg: str,
-    no_interactive: bool,
-    author: str | None,
-    email: str | None,
-    github_username: str | None,
-    description: str | None,
-    license_choice: str | None,
-    python_version: str | None,
-):
+def new(ctx: click.Context, project_name_arg: str, **kwargs: Any) -> int:
     """Create a new Python project."""
-    debug_flag = ctx.obj.get("DEBUG", False)
-
-    if not project_name_arg:
-        click.secho("Error: Project name cannot be empty.", fg="red", err=True)
-        return 1
-
-    project_name = project_name_arg
-
-    has_invalid, invalid_error = has_invalid_characters(project_name)
-    if has_invalid:
-        click.secho(f"Error: {invalid_error}", fg="red", err=True)
-        ctx.exit(1)
-
-    pypi_slug = pep503_normalize(project_name)
-
-    is_name_ok, name_error_message = pep503_name_ok(project_name)
-    if not is_name_ok:
-        click.secho(
-            f"Warning: Project name '{project_name}': {name_error_message}",
-            fg="yellow",
-            err=True,
-        )
-
-    if project_name != pypi_slug:
-        click.secho(
-            f"Warning: Project name '{project_name_arg}' normalized to '{pypi_slug}'.",
-            fg="yellow",
-            err=True,
-        )
-
-    current_project_name_for_processing = pypi_slug
-    python_slug = derive_python_package_slug(current_project_name_for_processing)
-
-    click.secho(f"Derived PyPI slug: {pypi_slug}", fg="blue", err=True)
-    click.secho(f"Derived Python package slug: {python_slug}", fg="blue", err=True)
-
-    name_warnings = _perform_project_name_checks(
-        project_name_arg,
-        pypi_slug,
-        python_slug,
+    # Create author details from kwargs
+    author_details = ProjectAuthorDetails(
+        name=cast(str | None, kwargs.get("author")),
+        email=cast(str | None, kwargs.get("email")),
+        github_username=cast(str | None, kwargs.get("github_username")),
     )
 
-    project_details: dict[str, str] | None = None
-    if no_interactive:
-        project_details = _get_project_details_non_interactive(
-            author,
-            email,
-            github_username,
-            description,
-            license_choice,
-            python_version,
-            name_warnings,
-            current_project_name_for_processing,
-        )
-    else:
-        project_details = collect_project_details(
-            current_project_name_for_processing, name_warnings
-        )
+    # Create options object from kwargs
+    options = ProjectOptions(
+        no_interactive=cast(bool, kwargs.get("no_interactive", False)),
+        author=author_details,
+        description=cast(str | None, kwargs.get("description")),
+        license_choice=cast(str | None, kwargs.get("license_choice")),
+        python_version=cast(str | None, kwargs.get("python_version")),
+    )
 
+    debug_flag = ctx.obj.get("DEBUG", False)
+
+    # Validate and process project name
+    name_data = validate_project_name(project_name_arg, ctx)
+
+    # Set project name in options
+    options.project_name = name_data.pypi_slug
+    options.name_warnings = name_data.name_warnings
+
+    # Get project details
+    try:
+        project_details = get_project_details(options)
+    except click.Abort:
+        ctx.exit(1)
     if project_details is None:
         ctx.exit(1)
 
-    project_details["project_name_original"] = project_name_arg
-    project_details["project_name_normalized"] = current_project_name_for_processing
-    project_details["pypi_slug"] = pypi_slug
-    project_details["python_package_slug"] = python_slug
-
-    click.secho(
-        f"Creating new project: {current_project_name_for_processing}", fg="green"
-    )
-    if debug_flag:
-        debug_display_details = {
-            "original_input_name": project_name_arg,
-            "name_for_processing": current_project_name_for_processing,
-            "pypi_slug": pypi_slug,
-            "python_slug": python_slug,
-            **project_details,
-        }
-        click.secho(f"With details: {debug_display_details}", fg="blue")
-
-    try:
-        # Create the project directory structure
-        output_path = Path.cwd()  # For now, use current directory as output path
-        project_root = create_base_structure(
-            output_path,
-            project_details["project_name_original"],
-            project_details["python_package_slug"],
-        )
-        click.secho(
-            f"Project directory structure created at: {project_root}", fg="green"
-        )
-    except FileExistsError as e:
-        click.secho(f"Error: {str(e)}", fg="red", err=True)
+    # Create the project
+    if create_project(name_data, project_details, debug_flag):
         ctx.exit(1)
-    except OSError as e:
-        click.secho(
-            f"Error creating project directory structure: {str(e)}", fg="red", err=True
-        )
-        ctx.exit(1)
-
+    click.secho(f"Project created successfully: {name_data.pypi_slug}", fg="green")
     return 0

@@ -2,6 +2,8 @@
 
 import unittest
 
+from pytest import raises
+
 from pyhatchery.components.name_service import (
     derive_python_package_slug,
     is_valid_python_package_name,
@@ -22,7 +24,6 @@ class TestNameService(unittest.TestCase):
             ("My__Project..Name", "my-project-name"),
             ("my-project", "my-project"),
             ("My--Project__Name", "my-project-name"),
-            ("123-PROJECT", "123-project"),
             ("PROJECT", "project"),
         ]
 
@@ -42,12 +43,10 @@ class TestNameService(unittest.TestCase):
             ("my_package", "my_package"),
             ("My Package", "my_package"),
             ("My-Hyphenated-Package", "my_hyphenated_package"),
-            ("123package", "p_123package"),
             ("package.name", "package_name"),
             ("my__package", "my_package"),
             ("_package_", "package"),
-            ("", "default_package_name"),
-            ("pass", "default_package_name"),
+            ("package123", "package123"),
         ]
 
         for input_name, expected_output in test_cases:
@@ -149,3 +148,37 @@ class TestNameService(unittest.TestCase):
                         f"Error message for '{name}' "
                         f"should contain '{reason_fragment}'",
                     )
+
+    def test_derive_python_package_slug_throws_exception(self):
+        """Test handling of invalid project names."""
+        # Test with a name that normalizes to an empty string
+        with raises(ValueError, match=".*is empty*"):
+            derive_python_package_slug("___+++")
+
+        # Test with a name that normalizes to a Python keyword
+        for p in [
+            "def",
+            "class",
+            "for",
+            "pass",
+            "return",
+            "if",
+            "else",
+            "elif",
+            "try",
+            "except",
+        ]:
+            with raises(ValueError, match=".* is a reserved keyword.*"):
+                derive_python_package_slug(p)
+
+        # Test with a name that is not a valid identifier
+        with raises(ValueError, match=".*starts with a digit.*"):
+            derive_python_package_slug("123abc")
+
+        # Test with edge cases that resolve to valid package names
+        assert derive_python_package_slug("project!name") == "project_name"
+        assert derive_python_package_slug("project name") == "project_name"
+
+        # Verify that non-keywords work correctly
+        assert derive_python_package_slug("normal_name") == "normal_name"
+        assert derive_python_package_slug("project-name") == "project_name"

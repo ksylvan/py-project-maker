@@ -6,10 +6,16 @@ These tests use click.testing.CliRunner.
 from pathlib import Path
 from unittest import mock
 
+import click
 import pytest
 from click.testing import CliRunner
 
 from pyhatchery import __version__
+from pyhatchery.cli import (
+    ProjectNameDetails,
+    check_name_validity,
+    create_project,
+)
 from pyhatchery.cli import (
     cli as pyhatchery_cli,  # Renamed to avoid conflict with pytest 'cli' fixture
 )
@@ -127,7 +133,7 @@ class TestNewCommand:
 
     @mock.patch("pyhatchery.cli.create_base_structure")
     @mock.patch("pyhatchery.cli.collect_project_details")
-    @mock.patch("pyhatchery.cli._perform_project_name_checks")
+    @mock.patch("pyhatchery.cli.check_name_validity")
     def test_new_interactive_mode_success(
         self,
         mock_name_checks: mock.MagicMock,
@@ -155,11 +161,11 @@ class TestNewCommand:
         mock_name_checks.assert_called_once_with(
             project_name, "my-interactive-project", "my_interactive_project"
         )
-        mock_collect_details.assert_called_once_with("my-interactive-project", [])
+        mock_collect_details.assert_called_once_with("my-interactive-project", [], {})
 
     @mock.patch("pyhatchery.cli.create_base_structure")
     @mock.patch("pyhatchery.cli.load_from_env")
-    @mock.patch("pyhatchery.cli._perform_project_name_checks")
+    @mock.patch("pyhatchery.cli.check_name_validity")
     def test_new_non_interactive_mode_all_flags(
         self,
         mock_name_checks: mock.MagicMock,
@@ -174,6 +180,8 @@ class TestNewCommand:
             "/fake/path/my_non_interactive_project"
         )
         project_name = "my_non_interactive_project"
+        # We're not using the helper function here since this test needs specific
+        # values that differ from the helper defaults
         args = [
             "new",
             project_name,
@@ -205,7 +213,7 @@ class TestNewCommand:
 
     @mock.patch("pyhatchery.cli.create_base_structure")
     @mock.patch("pyhatchery.cli.load_from_env")
-    @mock.patch("pyhatchery.cli._perform_project_name_checks")
+    @mock.patch("pyhatchery.cli.check_name_validity")
     def test_new_non_interactive_mode_env_override(
         self,
         mock_name_checks: mock.MagicMock,
@@ -244,7 +252,7 @@ class TestNewCommand:
         assert "'license': 'GPL-3.0'" in result.output
         mock_load_env.assert_called_once()
 
-    @mock.patch("pyhatchery.cli._perform_project_name_checks")
+    @mock.patch("pyhatchery.cli.check_name_validity")
     def test_new_non_interactive_mode_missing_required_flags(
         self, mock_name_checks: mock.MagicMock, runner: CliRunner
     ):
@@ -367,3 +375,162 @@ class TestErrorConditions:
         assert result.exit_code == 2
         assert "Error: No such command 'invalidcommand'." in result.output
         assert result.exception is not None
+
+
+class TestProjectNameValidation:
+    """Tests for project name validation logic."""
+
+    @mock.patch("pyhatchery.cli.check_pypi_availability")
+    @mock.patch("pyhatchery.cli.is_valid_python_package_name")
+    def test_check_name_validity_with_multiple_warnings(
+        self,
+        mock_is_valid_python_package: mock.MagicMock,
+        mock_check_pypi: mock.MagicMock,
+        runner: CliRunner,
+    ):
+        """Test all warning scenarios in check_name_validity."""
+        # Setup mocks to trigger all warning paths
+        mock_check_pypi.return_value = (True, None)  # Name is taken
+        mock_is_valid_python_package.return_value = (
+            False,
+            "Not valid",
+        )  # Python package name is invalid
+
+        _ = runner  # Avoid unused variable warning
+
+        # Call the function directly
+        original_name = "test_name"
+        pypi_slug = "test-name"
+        python_slug = "test_name"
+
+        with mock.patch("pyhatchery.cli.click.secho") as mock_secho:
+            warnings = check_name_validity(original_name, pypi_slug, python_slug)
+
+        _ = mock_secho  # Avoid unused variable warning
+        # Verify all warning paths were triggered
+        assert len(warnings) == 2
+        assert any("might already be taken on PyPI" in w for w in warnings)
+        assert any("is not PEP 8 compliant" in w for w in warnings)
+
+    @mock.patch("pyhatchery.cli.check_pypi_availability")
+    def test_check_name_validity_pypi_error(
+        self, mock_check_pypi: mock.MagicMock, runner: CliRunner
+    ):
+        """Test PyPI check error path in check_name_validity."""
+        # Setup mock to return an error
+        mock_check_pypi.return_value = (None, "Network error")
+
+        _ = runner  # Avoid unused variable warning
+
+        with mock.patch("pyhatchery.cli.click.secho"):
+            warnings = check_name_validity("test_name", "test-name", "test_name")
+
+        assert len(warnings) == 1
+        assert "PyPI availability check" in warnings[0]
+        assert "failed: Network error" in warnings[0]
+
+    @mock.patch("pyhatchery.cli.create_base_structure")
+    def test_create_project_file_exists_error(
+        self, mock_create_structure: mock.MagicMock, runner: CliRunner
+    ):
+        """Test FileExistsError handling in create_project."""
+        # Setup mock to raise FileExistsError
+        mock_create_structure.side_effect = FileExistsError("Directory already exists")
+
+        _ = runner  # Avoid unused variable warning
+
+        name_data = ProjectNameDetails(
+            original_arg="test_project",
+            pypi_slug="test-project",
+            python_slug="test_project",
+            name_warnings=[],
+        )
+        project_details = {
+            "author_name": "Test Author",
+            "author_email": "test@example.com",
+        }
+
+        with mock.patch("pyhatchery.cli.click.secho"):
+            result = create_project(name_data, project_details, False)
+
+        assert result == 1  # Should return error code 1
+
+    @mock.patch("pyhatchery.cli.create_base_structure")
+    def test_create_project_os_error(
+        self, mock_create_structure: mock.MagicMock, runner: CliRunner
+    ):
+        """Test OSError handling in create_project."""
+        # Setup mock to raise OSError
+        mock_create_structure.side_effect = OSError("Permission denied")
+
+        _ = runner  # Avoid unused variable warning
+
+        name_data = ProjectNameDetails(
+            original_arg="test_project",
+            pypi_slug="test-project",
+            python_slug="test_project",
+            name_warnings=[],
+        )
+        project_details = {
+            "author_name": "Test Author",
+            "author_email": "test@example.com",
+        }
+
+        with mock.patch("pyhatchery.cli.click.secho"):
+            result = create_project(name_data, project_details, False)
+
+        assert result == 1  # Should return error code 1
+
+    @mock.patch("pyhatchery.cli.get_project_details")
+    @mock.patch("pyhatchery.cli.validate_project_name")
+    def test_new_command_get_project_details_returns_none(
+        self,
+        mock_validate_name: mock.MagicMock,
+        mock_get_details: mock.MagicMock,
+        runner: CliRunner,
+    ):
+        """Test handling when get_project_details returns None."""
+        # Setup mocks
+        name_data = ProjectNameDetails(
+            original_arg="test_project",
+            pypi_slug="test-project",
+            python_slug="test_project",
+            name_warnings=[],
+        )
+        mock_validate_name.return_value = name_data
+        mock_get_details.return_value = None  # Simulate missing required fields
+
+        # Need to patch ctx.exit to avoid actually exiting
+        with mock.patch.object(click.Context, "exit") as mock_exit:
+            _ = runner.invoke(pyhatchery_cli, ["new", "test_project"])
+            mock_exit.assert_any_call(1)
+
+    @mock.patch("pyhatchery.cli.create_project")
+    @mock.patch("pyhatchery.cli.validate_project_name")
+    @mock.patch("pyhatchery.cli.get_project_details")
+    def test_new_command_create_project_returns_error(
+        self,
+        mock_get_details: mock.MagicMock,
+        mock_validate_name: mock.MagicMock,
+        mock_create_project: mock.MagicMock,
+        runner: CliRunner,
+    ):
+        """Test handling when create_project returns an error code."""
+        # Setup mocks
+        name_data = ProjectNameDetails(
+            original_arg="test_project",
+            pypi_slug="test-project",
+            python_slug="test_project",
+            name_warnings=[],
+        )
+        mock_validate_name.return_value = name_data
+        mock_get_details.return_value = {
+            "author_name": "Test",
+            "author_email": "test@example.com",
+        }
+        mock_create_project.return_value = 1  # Return error code
+
+        # Need to patch ctx.exit to avoid actually exiting
+        with mock.patch.object(click.Context, "exit") as mock_exit:
+            _ = runner.invoke(pyhatchery_cli, ["new", "test_project"])
+            mock_exit.assert_any_call(1)

@@ -5,7 +5,7 @@
 
 .PHONY: help bootstrap test coverage coverage-html format
 
-COVERAGE_FAIL_UNDER := 85
+COVERAGE_FAIL_UNDER := 90
 COVERAGE_SRC := src/pyhatchery
 
 help:
