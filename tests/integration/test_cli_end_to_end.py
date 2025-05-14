@@ -73,6 +73,13 @@ class TestCliEndToEnd:
         assert "Error: Missing argument 'PROJECT_NAME'." in result.stderr
         assert result.stdout == ""
 
+    def test_new_command_empty_project_name(self):
+        """Test `pyhatchery new ""` fails and shows correct error."""
+        result = run_pyhatchery_command(["new", ""])
+        assert result.returncode == 1
+        assert "Error: Project name cannot be empty." in result.stderr
+        assert result.stdout == ""
+
     def test_new_command_invalid_project_name_chars(self):
         """Test `pyhatchery new` with invalid characters in project_name."""
         # Assuming '!' is an invalid character based on has_invalid_characters

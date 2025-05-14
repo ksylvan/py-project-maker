@@ -378,6 +378,8 @@ class TestErrorConditions:
 
 
 class TestProjectNameValidation:
+    """Tests for project name validation logic."""
+
     @mock.patch("pyhatchery.cli.check_pypi_availability")
     @mock.patch("pyhatchery.cli.is_valid_python_package_name")
     def test_check_name_validity_with_multiple_warnings(
@@ -393,6 +395,8 @@ class TestProjectNameValidation:
             False,
             "Not valid",
         )  # Python package name is invalid
+
+        _ = runner  # Avoid unused variable warning
 
         # Call the function directly
         original_name = "test_name"
@@ -416,6 +420,8 @@ class TestProjectNameValidation:
         # Setup mock to return an error
         mock_check_pypi.return_value = (None, "Network error")
 
+        _ = runner  # Avoid unused variable warning
+
         with mock.patch("pyhatchery.cli.click.secho"):
             warnings = check_name_validity("test_name", "test-name", "test_name")
 
@@ -430,6 +436,8 @@ class TestProjectNameValidation:
         """Test FileExistsError handling in create_project."""
         # Setup mock to raise FileExistsError
         mock_create_structure.side_effect = FileExistsError("Directory already exists")
+
+        _ = runner  # Avoid unused variable warning
 
         name_data = ProjectNameDetails(
             original_arg="test_project",
@@ -454,6 +462,8 @@ class TestProjectNameValidation:
         """Test OSError handling in create_project."""
         # Setup mock to raise OSError
         mock_create_structure.side_effect = OSError("Permission denied")
+
+        _ = runner  # Avoid unused variable warning
 
         name_data = ProjectNameDetails(
             original_arg="test_project",
