@@ -7,7 +7,6 @@ primarily for checking package name availability on PyPI.
 
 from http import HTTPStatus
 
-import click
 import requests
 
 PYPI_JSON_URL_TEMPLATE = "https://pypi.org/pypi/{package_name}/json"
@@ -68,21 +67,3 @@ def check_pypi_availability(package_name: str) -> tuple[bool | None, str | None]
             f"An unexpected error occurred during PyPI check for '{package_name}': {e}"
         )
         return None, error_msg
-
-
-if __name__ == "__main__":
-    names_to_test = [
-        "requests",
-        "this_package_does_not_exist_and_hopefully_never_will",
-        "pip",
-    ]
-    for name in names_to_test:
-        taken, err = check_pypi_availability(name)
-        if err:
-            click.secho(f"Error checking '{name}': {err}", fg="red")
-        elif taken is None:
-            click.secho(f"Could not determine availability for '{name}'.", fg="yellow")
-        elif taken:
-            click.secho(f"'{name}' is likely TAKEN on PyPI.", fg="bright_red")
-        else:
-            click.secho(f"'{name}' is likely AVAILABLE on PyPI.", fg="green")

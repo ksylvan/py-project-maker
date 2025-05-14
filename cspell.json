@@ -21,6 +21,7 @@
 		"dotenv",
 		"envuser",
 		"fulltester",
+		"gituser",
 		"htmlcov",
 		"HTTPC",
 		"invalidcommand",

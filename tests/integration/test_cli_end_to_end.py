@@ -93,9 +93,6 @@ class TestCliEndToEnd:
         args = get_minimal_non_interactive_args(project_name)
         result = run_pyhatchery_command(args, cwd=tmp_path)
 
-        # Check for successful start of the process (exit code 0)
-        # and some expected output indicating it's proceeding.
-        # The actual project generation is mocked out in cli.py for now.
         assert result.returncode == 0, (
             f"stdout: {result.stdout}\nstderr: {result.stderr}"
         )
@@ -117,13 +114,6 @@ class TestCliEndToEnd:
         )
         assert f"Creating new project: {pypi_slug}" in result.stdout
         assert "Project directory structure created at:" in result.stdout
-        # Debug specific assertions removed for focus, covered by unit tests
-        # assert (
-        #     f"'original_input_name': '{project_name}'" in result.stdout
-        # )
-        # assert f"'name_for_processing': '{pypi_slug}'" in result.stdout
-        # assert "'author_name': 'Full Test Author'" in result.stdout
-        # assert "'license': 'Apache-2.0'" in result.stdout
 
     def test_new_command_interactive_start(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
@@ -137,32 +127,13 @@ class TestCliEndToEnd:
 
         _ = monkeypatch  # To avoid unused variable warning
 
-        # Mock collect_project_details to simulate it being called
-        # and returning some dummy data, then exiting.
-        # This is tricky for E2E subprocess tests.
-        # A better approach for testing "interactive start" might be
-        # to check for the initial prompts if we could control stdin/stdout
-        # of the subprocess, or rely on unit tests for the wizard itself.
-
-        # For this E2E, we'll check if the non-interactive path is NOT taken
-        # and that it attempts to proceed, implying interactive mode was entered.
-        # The actual interactive prompts are hard to test via subprocess without PTY.
-
-        # Expect it to pass name checks and attempt to run `collect_project_details`.
-        # Since `collect_project_details` isn't mocked at subprocess level,
-        # it will try to run. We check for output indicating it passed name checks,
-        # implying interactive mode started.
-
-        # For this E2E, if it fails due to prompt EOF, that's an indication
-        # it tried interactive.
         args = ["new", project_name]
         result = run_pyhatchery_command(args, cwd=tmp_path)
 
-        # The actual output shows "End of file reached. Exiting." and return code 1.
         assert result.returncode == 1, (  # Expecting failure due to EOF on prompt
             f"stdout: {result.stdout}\nstderr: {result.stderr}"
         )
-        assert "End of file reached. Exiting." in result.stdout
+        assert "Process cancelled by user" in result.stdout
         assert (
             f"Derived PyPI slug: {pypi_slug}" in result.stderr
         )  # Check it got past name processing

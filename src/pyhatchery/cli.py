@@ -162,8 +162,25 @@ def get_project_details(options: ProjectOptions) -> dict[str, str] | None:
 
     if options.no_interactive:
         return get_non_interactive_details(options)
+
+    # Create a dictionary of default values from CLI options
+    defaults: dict[str, str] = {}
+
+    if options.author.name:
+        defaults["author_name"] = options.author.name
+    if options.author.email:
+        defaults["author_email"] = options.author.email
+    if options.author.github_username:
+        defaults["github_username"] = options.author.github_username
+    if options.description:
+        defaults["project_description"] = options.description
+    if options.license_choice:
+        defaults["license"] = options.license_choice
+    if options.python_version:
+        defaults["python_version_preference"] = options.python_version
+
     return collect_project_details(
-        cast(str, options.project_name), options.name_warnings
+        cast(str, options.project_name), options.name_warnings, defaults
     )
 
 
@@ -342,7 +359,10 @@ def new(ctx: click.Context, project_name_arg: str, **kwargs: Any) -> int:
     options.name_warnings = name_data.name_warnings
 
     # Get project details
-    project_details = get_project_details(options)
+    try:
+        project_details = get_project_details(options)
+    except click.Abort:
+        ctx.exit(1)
     if project_details is None:
         ctx.exit(1)
 

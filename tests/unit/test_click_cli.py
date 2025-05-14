@@ -155,7 +155,7 @@ class TestNewCommand:
         mock_name_checks.assert_called_once_with(
             project_name, "my-interactive-project", "my_interactive_project"
         )
-        mock_collect_details.assert_called_once_with("my-interactive-project", [])
+        mock_collect_details.assert_called_once_with("my-interactive-project", [], {})
 
     @mock.patch("pyhatchery.cli.create_base_structure")
     @mock.patch("pyhatchery.cli.load_from_env")

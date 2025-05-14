@@ -46,7 +46,7 @@ def derive_python_package_slug(name: str) -> str:
         name: The project name.
 
     Returns:
-        A string suitable for use as a Python package name.
+        A string suitable for use as a Python package name or throws ValueError
     """
     slug = re.sub(r"[^a-zA-Z0-9_]", "_", name)
     slug = slug.lower()
@@ -54,16 +54,21 @@ def derive_python_package_slug(name: str) -> str:
     slug = slug.strip("_")
 
     if not slug:
-        return "default_package_name"
+        raise ValueError(
+            f"Derived Python package slug from {name} is empty. "
+            "Please provide a valid project name."
+        )
 
     if keyword.iskeyword(slug):
-        return "default_package_name"
-
-    if not slug.isidentifier():
-        if slug[0].isdigit():
-            slug = f"p_{slug}"
-        if not slug.isidentifier():
-            return "default_package_name"
+        raise ValueError(
+            f"Derived Python package slug from {name} is a reserved keyword. "
+            "Please provide a valid project name."
+        )
+    if slug[0].isdigit():
+        raise ValueError(
+            f"Derived Python package slug from {name} starts with a digit. "
+            "Please provide a valid project name."
+        )
 
     return slug
 

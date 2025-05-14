@@ -13,151 +13,100 @@ DEFAULT_PYTHON_VERSION: str = "3.11"
 DEFAULT_LICENSE: str = "MIT"
 
 
-def prompt_for_value(
-    prompt_message: str, default_value: str | None = None, max_retries: int = 3
-) -> str | None:
-    """Helper function to prompt user for input with a default."""
-    if default_value is not None:
-        prompt_with_default = f"{prompt_message} (default: {default_value}): "
-        user_input = input(prompt_with_default).strip()
-        if user_input:
-            return user_input
-        return default_value
-
-    prompt_no_default = f"{prompt_message}: "
-    retries = 0
-    while retries < max_retries:
-        user_input = input(prompt_no_default).strip()
-        if user_input:
-            return user_input
-        click.secho("This field cannot be empty.", fg="red")
-        retries += 1
-
-    raise ValueError(
-        f"Maximum retry limit ({max_retries}) reached. No valid input provided."
-    )
-
-
-def prompt_for_choice(
-    prompt_message: str, choices: list[str], default_choice: str, max_retries: int = 3
-) -> str | None:
-    "Helper function to prompt user to select from choices with retry limit."
-    click.secho(prompt_message, fg="cyan")
-    for i, choice in enumerate(choices):
-        if choice == default_choice:
-            click.secho(f"  {i + 1}. {choice}", fg="green", bold=True, nl=False)
-            click.secho(" (default)", fg="green")
-        else:
-            click.secho(f"  {i + 1}. {choice}")
-
-    retries = 0
-    while retries < max_retries:
-        try:
-            raw_selection = input(
-                f"Enter your choice (1-{len(choices)}, default is {default_choice}): "
-            ).strip()
-            if not raw_selection:
-                return default_choice
-            selection = int(raw_selection)
-            if 1 <= selection <= len(choices):
-                return choices[selection - 1]
-            message = f"Invalid choice. Enter a number from 1 to {len(choices)}."
-            click.secho(message, fg="red")
-        except ValueError:
-            click.secho("Invalid input. Please enter a number.", fg="red")
-    raise ValueError(
-        f"Maximum retry limit ({max_retries}) reached. No valid input provided."
-    )
-
-
 def collect_project_details(
     project_name: str,
-    name_warnings: list[str] | None,
-) -> dict[str, str] | None:
+    name_warnings: list[str],
+    cli_defaults: dict[str, str] | None = None,
+) -> dict[str, str]:
     """
-    Collects project details from the user via an interactive wizard.
+    Collect project details interactively.
 
     Args:
-        project_name: The name of the project.
-        name_warnings: A list of warnings related to the project name from Story 1.1A.
+        project_name: The normalized project name
+        name_warnings: List of warnings from name validation
+        cli_defaults: Dictionary of default values provided via CLI arguments
 
     Returns:
-        A dictionary containing the collected project details, or None if the user
-        chooses not to proceed after warnings.
+        Dictionary of project details or throws a click.Abort exception
     """
+    cli_defaults = cli_defaults or {}
+
+    # Display header
     click.secho("-" * 30, fg="blue")
-    click.secho(f"Configuring project: {project_name}", fg="blue", bold=True)
+    click.secho(f"Configuring project: {project_name}", fg="blue")
     click.secho("-" * 30, fg="blue")
 
-    if name_warnings:
-        proceed_prompt = (
-            "Ignore warnings and proceed with this name? (yes/no, default: yes): "
-        )
-        proceed = input(proceed_prompt).strip().lower()
-        if proceed in {"no", "n"}:
-            click.secho("Exiting project generation.", fg="red")
-            return None
-        click.secho("-" * 30, fg="blue")
-
-    author_name_default = get_git_config_value("user.name")
-    author_email_default = get_git_config_value("user.email")
-
-    details: dict[str, str] = {}
-
+    # If there are name warnings, confirm proceeding
     try:
-        details["author_name"] = (
-            prompt_for_value("Author Name", author_name_default) or ""
-        )
-        details["author_email"] = (
-            prompt_for_value("Author Email", author_email_default) or ""
-        )
-        details["github_username"] = prompt_for_value("GitHub Username") or ""
-        details["project_description"] = prompt_for_value("Project Description") or ""
-        details["license"] = (
-            prompt_for_choice("Select License:", COMMON_LICENSES, DEFAULT_LICENSE) or ""
-        )
-        details["python_version_preference"] = (
-            prompt_for_choice(
-                "Select Python Version:", PYTHON_VERSIONS, DEFAULT_PYTHON_VERSION
+        if name_warnings:
+            proceed = click.confirm(
+                "Ignore warnings and proceed with this name?", default=True
             )
-            or ""
+            if not proceed:
+                click.secho("Process cancelled by user.", fg="red")
+                raise click.Abort()
+
+        # Get author details with CLI arguments taking precedence
+        author_name = click.prompt(
+            "Author Name",
+            default=cli_defaults.get("author_name", get_git_config_value("user.name")),
+            show_default=True,
+            type=str,
         )
 
-    except ValueError as e:
-        click.secho(f"Error: {e}", fg="red", bold=True)
-        click.secho("Exiting project generation.", fg="red")
-        return None
-    except KeyboardInterrupt:
-        click.secho("\nUser interrupted the process.", fg="yellow")
-        return None
-    except EOFError:
-        click.secho("\nEnd of file reached. Exiting.", fg="yellow")
-        return None
+        author_email = click.prompt(
+            "Author Email",
+            default=cli_defaults.get(
+                "author_email", get_git_config_value("user.email")
+            ),
+            show_default=True,
+            type=str,
+        )
 
-    click.secho("-" * 30, fg="blue")
-    click.secho("Project details collected.", fg="green", bold=True)
-    return details
+        github_username = click.prompt(
+            "GitHub Username",
+            default=cli_defaults.get(
+                "github_username", get_git_config_value("user.github")
+            ),
+            type=str,
+            show_default=True,
+        )
 
+        # Get other project details with CLI arguments taking precedence
+        project_description = click.prompt(
+            "Project Description",
+            default=cli_defaults.get("project_description", ""),
+            type=str,
+            show_default=True,
+        )
 
-if __name__ == "__main__":
-    click.secho("Testing Interactive Wizard...", fg="magenta", bold=True)
-    test_warnings = [
-        "The name 'Test-Project' might already be taken on PyPI.",
-        "Derived Python package name 'Test_Project' does not follow PEP 8.",
-    ]
-    collected_info = collect_project_details(
-        "My Test Project", name_warnings=test_warnings
-    )
-    if collected_info:
-        click.secho("\nCollected Information:", fg="magenta", bold=True)
-        for key, value in collected_info.items():
-            click.secho(f"  {key}: {value}", fg="magenta")
+        license_choice = click.prompt(
+            "License",
+            default=cli_defaults.get("license", DEFAULT_LICENSE),
+            type=click.Choice(COMMON_LICENSES),
+            show_choices=True,
+            show_default=True,
+        )
 
-    click.secho(
-        "\nTesting Interactive Wizard (no warnings)...", fg="magenta", bold=True
-    )
-    collected_info_no_warn = collect_project_details("Another Project", [])
-    if collected_info_no_warn:
-        click.secho("\nCollected Information (no warnings):", fg="magenta", bold=True)
-        for key, value in collected_info_no_warn.items():
-            click.secho(f"  {key}: {value}", fg="magenta")
+        python_version = click.prompt(
+            "Python Version",
+            default=cli_defaults.get(
+                "python_version_preference", DEFAULT_PYTHON_VERSION
+            ),
+            type=click.Choice(PYTHON_VERSIONS),
+            show_choices=True,
+            show_default=True,
+        )
+    except (click.Abort, KeyboardInterrupt) as e:
+        click.secho("\nProcess cancelled by user.", fg="red")
+        raise click.Abort() from e
+
+    # Return collected details
+    return {
+        "author_name": author_name,
+        "author_email": author_email,
+        "github_username": github_username,
+        "project_description": project_description,
+        "license": license_choice,
+        "python_version_preference": python_version,
+    }
